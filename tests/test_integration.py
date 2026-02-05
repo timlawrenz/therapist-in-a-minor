@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from click.testing import CliRunner
 from extractor.cli import cli
+from unittest.mock import patch, MagicMock
 
 def test_full_pipeline_discovery_and_scaffolding(tmp_path):
     source_root = tmp_path / "source"
@@ -50,3 +51,47 @@ def test_full_pipeline_discovery_and_scaffolding(tmp_path):
     assert data["document_id"] == "doc1"
     assert data["file_type"] == "PDF"
     assert data["source_path"] == str((source_root / "doc1.pdf").absolute())
+
+def test_full_pipeline_extraction(tmp_path):
+    source_root = tmp_path / "source"
+    target_root = tmp_path / "target"
+    source_root.mkdir()
+    target_root.mkdir()
+    
+    # Create mock PDF
+    pdf_path = source_root / "test.pdf"
+    pdf_path.touch()
+    
+    # Mock DoclingEngine to avoid actual heavy processing
+    with patch("extractor.cli.DoclingEngine") as MockEngine:
+        mock_instance = MockEngine.return_value
+        
+        # Setup mock result
+        mock_result = MagicMock()
+        mock_instance.convert.return_value = mock_result
+        
+        # Setup save_images to return list
+        mock_instance.save_images.return_value = []
+        
+        runner = CliRunner()
+        result = runner.invoke(cli, ['extract', '--source', str(source_root), '--target', str(target_root)])
+        
+        assert result.exit_code == 0
+        
+        # Verify calls
+        mock_instance.convert.assert_called_with(pdf_path)
+        
+        output_dir = target_root / "test"
+        
+        # Check save_markdown call
+        mock_instance.save_markdown.assert_called()
+        args, _ = mock_instance.save_markdown.call_args
+        assert args[1] == output_dir / "test.md"
+        
+        # Check save_json call
+        mock_instance.save_json.assert_called()
+        args, _ = mock_instance.save_json.call_args
+        assert args[1] == output_dir / "test.json"
+        
+        # Check manifest call
+        mock_instance.generate_manifest.assert_called()
