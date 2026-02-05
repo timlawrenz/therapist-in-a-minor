@@ -115,8 +115,8 @@ class DoclingEngine:
                          # prov is a list of Prov items, usually one for the picture location
                          # Assuming Prov has page_no
                          page_no = picture.prov[0].page_no
-                         if hasattr(picture.prov[0], "bbox"):
-                             bbox = picture.prov[0].bbox
+                         if hasattr(picture.prov[0], "bbox") and picture.prov[0].bbox:
+                             bbox = picture.prov[0].bbox.as_tuple()
                     
                     filename = f"page_{page_no}_img_{i+1}.png"
                     

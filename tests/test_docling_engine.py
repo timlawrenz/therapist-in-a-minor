@@ -95,7 +95,9 @@ def test_docling_engine_save_images_returns_metadata(tmp_path):
     prov = MagicMock()
     prov.page_no = 1
     # Mock bbox
-    prov.bbox = [0, 0, 100, 100]
+    mock_bbox = MagicMock()
+    mock_bbox.as_tuple.return_value = (0, 0, 100, 100)
+    prov.bbox = mock_bbox
     mock_pic.prov = [prov]
     
     mock_result.document.pictures = [mock_pic]
