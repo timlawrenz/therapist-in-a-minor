@@ -19,8 +19,8 @@
 - [x] Task: Implement the manifest/metadata generator to tie all assets together with their source PDF. [977f372]
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Extraction, Lineage, and Mirrored Storage' (Protocol in workflow.md)
 
-## Phase 4: CLI Integration and Validation
+## Phase 4: CLI Integration and Validation [checkpoint: 9054486]
 - [x] Task: Refactor `extractor/cli.py` to use the Docling engine by default in the `extract` command. [f5f7cd2]
 - [x] Task: Update integration tests in `tests/test_integration.py` to verify the full Docling pipeline. [e1b0634]
-- [x] Task: Perform a sample extraction on a representative DOJ PDF and verify the mirrored structure. [mocked-verify]
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Integration and Validation' (Protocol in workflow.md)
+- [x] Task: Perform a sample extraction on a representative DOJ PDF and verify the mirrored structure. [c69de6c]
+- [x] Task: Conductor - User Manual Verification 'Phase 4: CLI Integration and Validation' (Protocol in workflow.md)
