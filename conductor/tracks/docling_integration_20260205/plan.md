@@ -13,7 +13,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Docling Engine Core' (Protocol in workflow.md)
 
 ## Phase 3: Extraction, Lineage, and Mirrored Storage
-- [ ] Task: Implement JSON and high-fidelity Markdown export using Docling's native serializers.
+- [x] Task: Implement JSON and high-fidelity Markdown export using Docling's native serializers. [60d33c3]
 - [ ] Task: Implement image extraction logic and saving to a mirrored directory structure.
 - [ ] Task: Implement lineage mapping to capture page numbers and coordinates for all extracted assets.
 - [ ] Task: Implement the manifest/metadata generator to tie all assets together with their source PDF.
