@@ -6,7 +6,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-(No active tracks)
+- [ ] **Track: Allow extraction to be resumable by checking for existing artifacts and manifest.**
+*Link: [./tracks/resumable_extraction_20260205/](./tracks/resumable_extraction_20260205/)*
 
 ---
 

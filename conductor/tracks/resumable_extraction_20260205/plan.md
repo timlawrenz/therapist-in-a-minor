@@ -1,0 +1,24 @@
+# Implementation Plan: Resumable Extraction
+
+### Phase 1: Completeness Verification Logic
+- [ ] Task: Implement `Scaffolder.is_extraction_complete(target_folder, doc_stem)` in `extractor/scaffolding.py`.
+    - [ ] This method will read `manifest.json` and check for the existence of the MD, JSON, images, and image metadata.
+- [ ] Task: Implement TDD for verification logic: Write failing tests in `tests/test_scaffolding_resume.py` covering:
+    - [ ] Success (all files exist).
+    - [ ] Failure (missing MD/JSON).
+    - [ ] Failure (missing image from manifest).
+    - [ ] Failure (missing `image_metadata.json` when images are present).
+- [ ] Task: Implement the logic to pass the tests.
+- [ ] Task: Conductor - User Manual Verification 'Phase 1: Completeness Verification Logic' (Protocol in workflow.md)
+
+### Phase 2: CLI Integration
+- [ ] Task: Update `extractor/cli.py` `extract` command to utilize the new skip logic.
+- [ ] Task: Ensure the `--force` flag correctly bypasses the check.
+- [ ] Task: Implement TDD for CLI resume: Write failing tests in `tests/test_cli_resume.py` to verify skipped counts and force behavior.
+- [ ] Task: Update logging to provide clear feedback on skipped documents.
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: CLI Integration' (Protocol in workflow.md)
+
+### Phase 3: Integration Validation
+- [ ] Task: Create a full pipeline test in `tests/test_integration_resume.py` that runs extraction twice and confirms the second run skips all files.
+- [ ] Task: Perform manual verification on the DOJ dataset (e.g., process 2 files, stop, run again).
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Integration Validation' (Protocol in workflow.md)
