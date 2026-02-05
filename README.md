@@ -24,37 +24,82 @@ This project aims to create a high-fidelity, machine-readable derivative of the 
 
 ## Usage
 
-The primary command is `discover`, which recursively scans a source directory for documents (PDFs, Images, Videos) and creates a structured scaffolding in the target directory.
+The tool offers two main commands: `discover` and `extract`.
 
-### Basic Discovery
+### 1. Discovery
+Recursively scans a source directory for documents (PDFs) and creates a structured scaffolding in the target directory.
 
 ```bash
 python -m extractor.cli discover --source /path/to/source --target /path/to/target
 ```
 
-### Options
-
--   `--source <path>`: (Required) Path to the source directory containing the DOJ files.
--   `--target <path>`: (Required) Path where the processed dataset will be created.
--   `--force`: Force overwrite of existing processed documents. By default, the tool skips documents that already have a `manifest.json` in the target folder.
--   `--verbose`: Enable verbose logging (DEBUG level) to see detailed processing information.
--   `--help`: Show the help message and exit.
-
-### Example
+### 2. Extraction
+Extracts text, layouts, and images from the documents using **Docling**. It also performs AI enrichment on extracted images (descriptions and embeddings).
 
 ```bash
-python -m extractor.cli --verbose discover --source ./source_data --target ./derived_dataset
+python -m extractor.cli extract --source /path/to/source --target /path/to/target
 ```
 
-## Dataset Structure
+### Options
+-   `--source <path>`: (Required) Path to the source directory containing the DOJ files.
+-   `--target <path>`: (Required) Path where the processed dataset will be created.
+-   `--force`: Force overwrite of existing processed documents.
+-   `--verbose`: Enable verbose logging (DEBUG level).
 
-Each discovered document is given its own directory in the target location, mirroring the source hierarchy:
+## Configuration
+
+Configuration is managed via `config.yaml` in the project root. You can customize the models used for extraction and enrichment.
+
+```yaml
+docling:
+  ocr_model: "https://huggingface.co/zai-org/GLM-OCR"
+  layout_model: "https://huggingface.co/docling-project/docling-layout-heron-101"
+
+enrichment:
+  # Connection to local Ollama instance for image descriptions
+  ollama_host: "http://localhost:11434"
+  description_model: "llava"  # e.g., 'llava', 'gemma3:27b'
+  
+  # Hugging Face model IDs for embeddings (runs locally via Transformers)
+  embedding_model_dino: "facebook/dinov2-base"
+  embedding_model_clip: "openai/clip-vit-base-patch32"
+```
+
+## Data Model & Extracted Fields
+
+For every processed PDF document, the following artifacts are generated in its target directory:
+
+### 1. Text & Layout
+-   **Markdown (`<doc_id>.md`):** High-fidelity text extraction preserving headers, tables, and lists.
+-   **Structured JSON (`<doc_id>.json`):** Full document tree representation provided by Docling, including paragraphs, headers, tables, and their bounding box coordinates.
+
+### 2. Extracted Images
+All figures, photos, and charts detected in the PDF are saved as individual PNG files in the `images/` subdirectory.
+
+### 3. Image Enrichment Metadata
+A sidecar JSON file (`images/image_metadata.json`) containing AI-derived analysis for every extracted image:
+
+-   **`description`:** A detailed natural language description of the image content (generated via Ollama/VLM).
+-   **`embeddings`:** High-dimensional vector representations for semantic search:
+    -   **DINOv2:** Self-supervised vision features (e.g., from `facebook/dinov2-base`).
+    -   **CLIP:** Semantic text-image features (e.g., from `openai/clip-vit-base-patch32`).
+
+### 4. Lineage Manifest (`manifest.json`)
+The central record for the document, linking all assets:
+-   **`timestamp`:** When the extraction occurred.
+-   **`models`:** Which OCR and Layout models were used.
+-   **`images`:** List of extracted images with their provenance (page number, bounding box).
+
+## Dataset Structure
 
 ```
 target/
 └── relative/path/to/document_id/
     ├── document_id.pdf (Symlink to source)
-    └── manifest.json (Metadata and lineage)
+    ├── document_id.md
+    ├── document_id.json
+    ├── manifest.json
+    └── images/
+        ├── page_1_img_1.png
+        └── image_metadata.json
 ```
-
-The `manifest.json` contains core metadata including file hashes, size, and a processing history for full traceability.
