@@ -1,5 +1,6 @@
 import hashlib
 import os
+import yaml
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any
@@ -30,3 +31,16 @@ def get_file_metadata(file_path: Path) -> Dict[str, Any]:
         "hash": file_hash,
         "creation_date": datetime.fromtimestamp(stats.st_ctime).isoformat(),
     }
+
+def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
+    """
+    Loads configuration from a YAML file.
+    """
+    path = Path(config_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    
+    with open(path, "r") as f:
+        config = yaml.safe_load(f)
+    
+    return config
