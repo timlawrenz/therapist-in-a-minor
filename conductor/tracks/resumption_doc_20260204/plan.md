@@ -2,7 +2,7 @@
 
 This plan covers the addition of idempotency to the discovery engine and the creation of project-level documentation.
 
-## Phase 1: Idempotency and CLI Updates
+## Phase 1: Idempotency and CLI Updates [checkpoint: 6615b25]
 Implement logic to skip existing documents and add the `--force` flag.
 
 - [x] Task: Update Scaffolder for Existence Check 9adef3b
@@ -11,7 +11,7 @@ Implement logic to skip existing documents and add the `--force` flag.
 - [x] Task: Update CLI with Force Flag and Skip Logic 8ccbcac
     - [ ] Write Tests: Verify the `--force` flag correctly triggers re-processing and the default behavior skips existing folders.
     - [ ] Implement Feature: Update `extractor/cli.py` to handle the `--force` option and track "skipped" counts.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Idempotency and CLI Updates' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Idempotency and CLI Updates' (Protocol in workflow.md) 6615b25
 
 ## Phase 2: Documentation
 Create the project README.md.
