@@ -73,7 +73,9 @@ class EnrichmentEngine:
             
             response = self.client.generate(
                 model=self.description_model,
-                prompt="Describe this image in detail.",
+                prompt="Provide a detailed natural language description of this image. "
+                       "Output ONLY the description. Do not include any preamble, "
+                       "introductory text, conversational filler, or Markdown headings.",
                 images=[image_bytes]
             )
             return response.get("response", "").strip()
