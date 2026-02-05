@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [~] **Track: Create for every extracted image a) a text description of what's visible in an extracted image, and b) a DINOv2 and a CLIP embedding using llm-adapter and Ollama.**
+- [x] **Track: Create for every extracted image a) a text description of what's visible in an extracted image, and b) a DINOv2 and a CLIP embedding using llm-adapter and Ollama.**
 *Link: [./tracks/image_enrichment_20260205/](./tracks/image_enrichment_20260205/)*
 
 ---
