@@ -18,8 +18,14 @@ class Scanner:
         """
         Recursively yields paths to supported files in the source directory.
         Ignores hidden files (starting with .).
+        If source_path is a file, yields it if supported.
         """
         if not self.source_path.exists():
+            return
+
+        if self.source_path.is_file():
+            if self.source_path.suffix.lower() in self.SUPPORTED_EXTENSIONS:
+                yield self.source_path
             return
 
         for path in self.source_path.rglob('*'):
