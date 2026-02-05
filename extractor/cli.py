@@ -79,7 +79,8 @@ def discover(source, target, force):
 @cli.command()
 @click.option('--source', required=True, type=click.Path(exists=True, file_okay=True, path_type=Path), help='Source file or directory path')
 @click.option('--target', required=True, type=click.Path(path_type=Path), help='Target directory path')
-def extract(source, target):
+@click.option('--force', is_flag=True, help='Force overwrite of existing processed documents')
+def extract(source, target, force):
     """
     Extracts text and images from documents using Docling.
     """
@@ -89,9 +90,11 @@ def extract(source, target):
         engine = DoclingEngine()
         enrichment_engine = EnrichmentEngine()
         scanner = Scanner(source)
+        scaffolder = Scaffolder(source, target)
         
         count = 0
         errors = 0
+        skipped = 0
         
         files_to_process = scanner.scan()
         
@@ -112,6 +115,12 @@ def extract(source, target):
                     # This puts artifacts in a folder dedicated to the document
                     output_dir = target / relative_path.parent / source_file.stem
                 
+                # Check for resumption
+                if not force and scaffolder.is_extraction_complete(output_dir, source_file.stem):
+                    logger.info(f"Skipping already processed {source_file}")
+                    skipped += 1
+                    continue
+
                 output_dir.mkdir(parents=True, exist_ok=True)
                 
                 logger.info(f"Processing {source_file} -> {output_dir}")
@@ -150,6 +159,7 @@ def extract(source, target):
                 
         click.echo(f"Extraction complete.")
         click.echo(f"  Successfully extracted:   {count}")
+        click.echo(f"  Skipped (already exists): {skipped}")
         click.echo(f"  Errors encountered:       {errors}")
         
     except Exception as e:
