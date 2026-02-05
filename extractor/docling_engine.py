@@ -119,14 +119,21 @@ class DoclingEngine:
                              bbox = picture.prov[0].bbox
                     
                     filename = f"page_{page_no}_img_{i+1}.png"
-                    picture.image.save(output_dir / filename)
                     
-                    image_metadata.append({
-                        "filename": filename,
-                        "page_no": page_no,
-                        "bbox": bbox,
-                        "path": str(output_dir / filename)
-                    })
+                    # Handle Docling ImageRef
+                    img = picture.image
+                    if hasattr(img, "pil_image"):
+                        img = img.pil_image
+                        
+                    if img is not None:
+                        img.save(output_dir / filename)
+                    
+                        image_metadata.append({
+                            "filename": filename,
+                            "page_no": page_no,
+                            "bbox": bbox,
+                            "path": str(output_dir / filename)
+                        })
         
         return image_metadata
 

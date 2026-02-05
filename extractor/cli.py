@@ -83,6 +83,10 @@ def extract(source, target):
         files_to_process = scanner.scan()
         
         for source_file in files_to_process:
+            if source_file.suffix.lower() != ".pdf":
+                logger.debug(f"Skipping non-PDF file: {source_file}")
+                continue
+
             try:
                 # Determine output directory (mirror structure)
                 if source.is_file():
