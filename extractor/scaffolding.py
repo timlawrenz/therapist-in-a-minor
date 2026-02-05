@@ -27,6 +27,12 @@ class Scaffolder:
         target_folder.mkdir(parents=True, exist_ok=True)
         return target_folder
 
+    def is_processed(self, target_folder: Path) -> bool:
+        """
+        Checks if a document has already been processed by checking for manifest.json.
+        """
+        return (Path(target_folder) / "manifest.json").exists()
+
     def write_manifest(self, source_file: Path, target_folder: Path) -> Path:
         """
         Generates and writes the manifest.json file.
