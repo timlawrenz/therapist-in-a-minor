@@ -20,7 +20,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Extraction, Lineage, and Mirrored Storage' (Protocol in workflow.md)
 
 ## Phase 4: CLI Integration and Validation
-- [ ] Task: Refactor `extractor/cli.py` to use the Docling engine by default in the `extract` command.
+- [x] Task: Refactor `extractor/cli.py` to use the Docling engine by default in the `extract` command. [f5f7cd2]
 - [ ] Task: Update integration tests in `tests/test_integration.py` to verify the full Docling pipeline.
 - [ ] Task: Perform a sample extraction on a representative DOJ PDF and verify the mirrored structure.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Integration and Validation' (Protocol in workflow.md)
