@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from .discovery import Scanner
 from .scaffolding import Scaffolder
+from .docling_engine import DoclingEngine
 
 # Configure logging
 logging.basicConfig(
@@ -62,6 +63,63 @@ def discover(source, target, force):
     click.echo(f"  Successfully processed:   {count}")
     click.echo(f"  Skipped (already exists): {skipped}")
     click.echo(f"  Errors encountered:       {errors}")
+
+@cli.command()
+@click.option('--source', required=True, type=click.Path(exists=True, file_okay=True, path_type=Path), help='Source file or directory path')
+@click.option('--target', required=True, type=click.Path(path_type=Path), help='Target directory path')
+def extract(source, target):
+    """
+    Extracts text and images from documents using Docling.
+    """
+    click.echo(f"Extracting from {source} to {target}")
+    
+    try:
+        engine = DoclingEngine()
+        scanner = Scanner(source)
+        
+        count = 0
+        errors = 0
+        
+        files_to_process = scanner.scan()
+        
+        for source_file in files_to_process:
+            try:
+                # Determine output directory (mirror structure)
+                if source.is_file():
+                    # For a single file, we can put output in target/filename_stem
+                    output_dir = target / source_file.stem
+                else:
+                    # For directory, mirror structure
+                    relative_path = source_file.relative_to(source)
+                    # Structure: target / rel_path / filename_stem
+                    # This puts artifacts in a folder dedicated to the document
+                    output_dir = target / relative_path.parent / source_file.stem
+                
+                output_dir.mkdir(parents=True, exist_ok=True)
+                
+                logger.info(f"Processing {source_file} -> {output_dir}")
+                
+                result = engine.convert(source_file)
+                
+                # Save artifacts
+                engine.save_markdown(result, output_dir / f"{source_file.stem}.md")
+                engine.save_json(result, output_dir / f"{source_file.stem}.json")
+                image_metadata = engine.save_images(result, output_dir / "images")
+                engine.generate_manifest(result, output_dir / "manifest.json", image_metadata)
+                
+                count += 1
+            except Exception as e:
+                logger.error(f"Error extracting {source_file}: {e}")
+                click.echo(f"Error extracting {source_file}: {e}", err=True)
+                errors += 1
+                
+        click.echo(f"Extraction complete.")
+        click.echo(f"  Successfully extracted:   {count}")
+        click.echo(f"  Errors encountered:       {errors}")
+        
+    except Exception as e:
+        logger.critical(f"Critical error during extraction: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     cli()

@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
 from extractor.cli import cli
 
@@ -100,3 +100,25 @@ def test_cli_force_overwrites_existing_manifest(tmp_path):
     assert "Skipped (already exists): 0" in result.output
     # Verify it was overwritten (manifest.json should now be JSON from write_manifest, not "old")
     assert (doc_target / "manifest.json").read_text() != "old"
+
+def test_cli_extract_command(tmp_path):
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    (source_dir / "test.pdf").touch()
+    
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    
+    # Mock DoclingEngine to avoid actual heavy processing
+    with patch("extractor.cli.DoclingEngine") as MockEngine:
+        mock_instance = MockEngine.return_value
+        mock_result = MagicMock()
+        mock_instance.convert.return_value = mock_result
+        mock_instance.save_images.return_value = [] # Mock metadata
+        
+        runner = CliRunner()
+        result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
+        
+        assert result.exit_code == 0
+        assert "Extraction complete" in result.output
+        mock_instance.convert.assert_called()
