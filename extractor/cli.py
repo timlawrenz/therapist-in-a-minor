@@ -5,6 +5,8 @@ from pathlib import Path
 from .discovery import Scanner
 from .scaffolding import Scaffolder
 from .docling_engine import DoclingEngine
+from .enrichment_engine import EnrichmentEngine
+import json
 
 # Configure logging
 logging.basicConfig(
@@ -85,6 +87,7 @@ def extract(source, target):
     
     try:
         engine = DoclingEngine()
+        enrichment_engine = EnrichmentEngine()
         scanner = Scanner(source)
         
         count = 0
@@ -119,6 +122,24 @@ def extract(source, target):
                 engine.save_markdown(result, output_dir / f"{source_file.stem}.md")
                 engine.save_json(result, output_dir / f"{source_file.stem}.json")
                 image_metadata = engine.save_images(result, output_dir / "images")
+                
+                # Enrichment
+                if image_metadata:
+                    logger.info(f"Enriching {len(image_metadata)} images for {source_file.name}...")
+                    for img_data in image_metadata:
+                        img_path = Path(img_data["path"])
+                        
+                        description = enrichment_engine.describe_image(img_path)
+                        embeddings = enrichment_engine.embed_image(img_path)
+                        
+                        img_data["description"] = description
+                        img_data["embeddings"] = embeddings
+                    
+                    # Save image_metadata.json
+                    images_dir = output_dir / "images"
+                    with open(images_dir / "image_metadata.json", "w", encoding="utf-8") as f:
+                        json.dump(image_metadata, f, indent=2, ensure_ascii=False)
+                
                 engine.generate_manifest(result, output_dir / "manifest.json", image_metadata)
                 
                 count += 1
