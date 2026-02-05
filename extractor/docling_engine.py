@@ -129,3 +129,26 @@ class DoclingEngine:
                     })
         
         return image_metadata
+
+    def generate_manifest(self, result, output_path: Path, image_metadata: list):
+        """
+        Generates a manifest file with extraction metadata.
+        """
+        import json
+        from datetime import datetime
+        
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        manifest = {
+            "timestamp": datetime.now().isoformat(),
+            "page_count": len(result.pages) if hasattr(result, "pages") else 0,
+            "models": {
+                "ocr_model": self.config.get("docling", {}).get("ocr_model"),
+                "layout_model": self.config.get("docling", {}).get("layout_model"),
+            },
+            "images": image_metadata,
+        }
+        
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=2)

@@ -144,7 +144,15 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     engine = DoclingEngine()
+
+
+
+
 
 
 
@@ -152,11 +160,23 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     output_dir = Path("tmp_output")
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -164,7 +184,15 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     mock_pic.image = MagicMock()
+
+
+
+
 
 
 
@@ -172,7 +200,15 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     prov = MagicMock()
+
+
+
+
 
 
 
@@ -180,7 +216,15 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     # Mock bbox as something serializable or object
+
+
+
+
 
 
 
@@ -188,11 +232,23 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     mock_pic.prov = [prov]
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -200,7 +256,15 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -208,7 +272,15 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -216,7 +288,15 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     assert len(metadata) == 1
+
+
+
+
 
 
 
@@ -224,7 +304,195 @@ def test_docling_engine_save_images_returns_metadata():
 
 
 
+
+
+
+
     assert "page_1_img_1.png" in str(metadata[0]["filename"])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test_docling_engine_manifest():
+
+
+
+
+
+
+
+    engine = DoclingEngine()
+
+
+
+
+
+
+
+    mock_result = MagicMock()
+
+
+
+
+
+
+
+    # Mock pages count (legacy or 2.0 structure)
+
+
+
+
+
+
+
+    # result.pages is typically a list of Page objects
+
+
+
+
+
+
+
+    mock_result.pages = [MagicMock(), MagicMock()]
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    image_metadata = [{"filename": "img1.png", "page_no": 1}]
+
+
+
+
+
+
+
+    output_path = Path("tmp_output/manifest.json")
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    # We mock open
+
+
+
+
+
+
+
+    with patch("builtins.open", mock_open()) as mock_file:
+
+
+
+
+
+
+
+        with patch("json.dump") as mock_json_dump:
+
+
+
+
+
+
+
+            engine.generate_manifest(mock_result, output_path, image_metadata)
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            mock_json_dump.assert_called_once()
+
+
+
+
+
+
+
+            args, _ = mock_json_dump.call_args
+
+
+
+
+
+
+
+            data = args[0]
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            assert data["page_count"] == 2
+
+
+
+
+
+
+
+            assert data["images"] == image_metadata
+
+
+
+
+
+
+
+
 
 
 
