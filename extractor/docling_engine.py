@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -7,6 +8,8 @@ from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.datamodel.layout_model_specs import DOCLING_LAYOUT_HERON_101, LayoutModelConfig
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from extractor.utils import load_config
+
+logger = logging.getLogger(__name__)
 
 class DoclingEngine:
     """
@@ -127,6 +130,7 @@ class DoclingEngine:
                         
                     if img is not None:
                         img.save(output_dir / filename)
+                        logger.debug(f"Extracted image: {filename} to {output_dir}")
                     
                         image_metadata.append({
                             "filename": filename,
