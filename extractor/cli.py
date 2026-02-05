@@ -59,9 +59,9 @@ def discover(source, target, force):
         sys.exit(1)
         
     click.echo(f"Processing complete.")
-    click.echo(f"  Successfully processed: {count}")
+    click.echo(f"  Successfully processed:   {count}")
     click.echo(f"  Skipped (already exists): {skipped}")
-    click.echo(f"  Errors encountered:     {errors}")
+    click.echo(f"  Errors encountered:       {errors}")
 
 if __name__ == '__main__':
     cli()

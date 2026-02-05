@@ -56,7 +56,7 @@ def test_cli_error_during_processing(tmp_path):
         assert result.exit_code == 0
         assert "Error processing" in result.output
         assert "Disk full" in result.output
-        assert "Errors encountered:     1" in result.output
+        assert "Errors encountered:       1" in result.output
 
 def test_cli_skips_existing_manifest(tmp_path):
     source_dir = tmp_path / "source"
@@ -76,7 +76,7 @@ def test_cli_skips_existing_manifest(tmp_path):
     
     assert result.exit_code == 0
     assert "Skipped (already exists): 1" in result.output
-    assert "Successfully processed: 0" in result.output
+    assert "Successfully processed:   0" in result.output
 
 def test_cli_force_overwrites_existing_manifest(tmp_path):
     source_dir = tmp_path / "source"
@@ -96,7 +96,7 @@ def test_cli_force_overwrites_existing_manifest(tmp_path):
     result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir), '--force'])
     
     assert result.exit_code == 0
-    assert "Successfully processed: 1" in result.output
+    assert "Successfully processed:   1" in result.output
     assert "Skipped (already exists): 0" in result.output
     # Verify it was overwritten (manifest.json should now be JSON from write_manifest, not "old")
     assert (doc_target / "manifest.json").read_text() != "old"
