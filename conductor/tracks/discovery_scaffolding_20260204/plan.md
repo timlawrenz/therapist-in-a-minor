@@ -22,7 +22,7 @@ Implement the logic to create the target directory structure and generate initia
 - [x] Task: Manifest Data Extraction 1f43c3e
     - [ ] Write Tests: Verify that file size, hash, and creation date are correctly extracted from a sample file.
     - [ ] Implement Feature: Implement metadata extraction utility in `extractor/utils.py`.
-- [ ] Task: Manifest File Generation
+- [x] Task: Manifest File Generation 6136072
     - [ ] Write Tests: Verify that `manifest.json` is correctly written to the target directory with the required schema.
     - [ ] Implement Feature: Finalize the scaffolding logic to write the manifest.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Scaffolding and Manifest Generation' (Protocol in workflow.md)
