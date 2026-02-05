@@ -4,3 +4,6 @@ pytest-cov
 docling
 ollama
 numpy
+transformers
+torch
+pillow
