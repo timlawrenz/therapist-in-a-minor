@@ -33,6 +33,54 @@ class Scaffolder:
         """
         return (Path(target_folder) / "manifest.json").exists()
 
+    def is_extraction_complete(self, target_folder: Path, doc_stem: str) -> bool:
+        """
+        Checks if the extraction is complete for a given document.
+        Complete means:
+        - manifest.json exists
+        - doc_stem.md exists
+        - doc_stem.json exists
+        - All images listed in manifest exist
+        - If images exist, image_metadata.json exists
+        """
+        target_folder = Path(target_folder)
+        manifest_path = target_folder / "manifest.json"
+        
+        if not manifest_path.exists():
+            return False
+            
+        # Check MD and JSON
+        if not (target_folder / f"{doc_stem}.md").exists():
+            return False
+        if not (target_folder / f"{doc_stem}.json").exists():
+            return False
+            
+        try:
+            with open(manifest_path, "r") as f:
+                manifest = json.load(f)
+        except Exception:
+            return False
+            
+        images = manifest.get("images", [])
+        if not images:
+            return True
+            
+        images_dir = target_folder / "images"
+        if not images_dir.exists():
+            return False
+            
+        # Check image metadata
+        if not (images_dir / "image_metadata.json").exists():
+            return False
+            
+        # Check individual images
+        for img in images:
+            filename = img.get("filename")
+            if not filename or not (images_dir / filename).exists():
+                return False
+                
+        return True
+
     def write_manifest(self, source_file: Path, target_folder: Path) -> Path:
         """
         Generates and writes the manifest.json file.
