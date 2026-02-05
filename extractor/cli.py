@@ -18,7 +18,17 @@ logger = logging.getLogger(__name__)
 @click.option('--verbose', is_flag=True, help='Enable verbose logging')
 def cli(verbose):
     if verbose:
-        logger.setLevel(logging.DEBUG)
+        # Set level for the entire 'extractor' package
+        logging.getLogger('extractor').setLevel(logging.DEBUG)
+        # Also ensure root handler allows it if needed, but basicConfig set root to INFO.
+        # We might need to adjust root or just the handler.
+        # Generally, logger level filters first. 
+        # But if root is INFO, does it block DEBUG from children? 
+        # No, child logger level overrides if lower (more verbose).
+        # But the handler attached to root (from basicConfig) is set to NOTSET by default? 
+        # No, basicConfig sets root logger level. Handlers usually process everything passed to them.
+        # Let's set root logger to DEBUG to be safe if 'extractor' logger propagates up.
+        logging.getLogger().setLevel(logging.DEBUG)
 
 @cli.command()
 @click.option('--source', required=True, type=click.Path(exists=True, file_okay=False, path_type=Path), help='Source directory path')
