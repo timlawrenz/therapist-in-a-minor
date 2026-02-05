@@ -8,7 +8,7 @@ Focus on setting up the project structure, CLI entry point, and basic directory 
 - [x] Task: Project Structure and CLI Setup 0d3b8e9
     - [ ] Write Tests: Verify CLI arguments (`--source`, `--target`) are correctly parsed and validated.
     - [ ] Implement Feature: Create `extractor/cli.py` and `extractor/__init__.py`. Use `click` or `argparse`.
-- [ ] Task: Basic Recursive File Discovery
+- [x] Task: Basic Recursive File Discovery 7401c2d
     - [ ] Write Tests: Verify the scanner identifies PDF, Image, and Video files in a nested directory structure.
     - [ ] Implement Feature: Create `extractor/discovery.py` with a scanner class that yields file paths.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Foundation and CLI Scaffolding' (Protocol in workflow.md)
