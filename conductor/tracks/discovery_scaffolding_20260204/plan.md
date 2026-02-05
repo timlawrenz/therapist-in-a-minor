@@ -5,7 +5,7 @@ This plan covers the implementation of the core discovery and scaffolding logic 
 ## Phase 1: Foundation and CLI Scaffolding
 Focus on setting up the project structure, CLI entry point, and basic directory scanning.
 
-- [ ] Task: Project Structure and CLI Setup
+- [~] Task: Project Structure and CLI Setup
     - [ ] Write Tests: Verify CLI arguments (`--source`, `--target`) are correctly parsed and validated.
     - [ ] Implement Feature: Create `extractor/cli.py` and `extractor/__init__.py`. Use `click` or `argparse`.
 - [ ] Task: Basic Recursive File Discovery
