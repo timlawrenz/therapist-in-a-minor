@@ -13,10 +13,10 @@ Implement logic to skip existing documents and add the `--force` flag.
     - [ ] Implement Feature: Update `extractor/cli.py` to handle the `--force` option and track "skipped" counts.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Idempotency and CLI Updates' (Protocol in workflow.md) 6615b25
 
-## Phase 2: Documentation
+## Phase 2: Documentation [checkpoint: 4b6ba31]
 Create the project README.md.
 
 - [x] Task: Generate Project README.md 20ab3c2
     - [ ] Write Tests: N/A (Manual Verification).
     - [ ] Implement Feature: Create `README.md` with Vision, Installation, and Usage sections as specified.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Documentation' (Protocol in workflow.md) 4b6ba31
