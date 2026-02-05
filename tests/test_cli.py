@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from click.testing import CliRunner
 from extractor.cli import cli
 
@@ -22,11 +23,36 @@ def test_cli_discover_arguments(tmp_path):
     
     runner = CliRunner()
     result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir)])
-    # We expect it to fail currently because discover command logic isn't implemented, 
-    # but the argument parsing should succeed (exit code might be 0 if we mock the logic, or non-zero if logic fails)
-    # For now, let's just check if it accepts the arguments. 
-    # Since we haven't implemented the command yet, this test will fail on import.
-    # But following TDD, I write the test first.
-    # I'll assert exit_code 0 assuming I'll implement a stub.
     assert result.exit_code == 0
     assert f"Discovering from {source_dir} to {target_dir}" in result.output
+
+def test_cli_nonexistent_source(tmp_path):
+    runner = CliRunner()
+    result = runner.invoke(cli, ['discover', '--source', 'nonexistent_path', '--target', str(tmp_path)])
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+def test_cli_source_is_file(tmp_path):
+    test_file = tmp_path / "file.txt"
+    test_file.touch()
+    runner = CliRunner()
+    result = runner.invoke(cli, ['discover', '--source', str(test_file), '--target', str(tmp_path)])
+    assert result.exit_code != 0
+    assert "is a file" in result.output
+
+def test_cli_error_during_processing(tmp_path):
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    (source_dir / "test.pdf").touch()
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    
+    with patch("extractor.scaffolding.Scaffolder.create_scaffold") as mock_scaffold:
+        mock_scaffold.side_effect = Exception("Disk full")
+        runner = CliRunner()
+        result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir)])
+        
+        assert result.exit_code == 0
+        assert "Error processing" in result.output
+        assert "Disk full" in result.output
+        assert "Errors encountered:     1" in result.output
