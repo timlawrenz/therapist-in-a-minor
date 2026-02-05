@@ -57,3 +57,39 @@ class DoclingEngine:
         Converts a PDF document.
         """
         return self.converter.convert(pdf_path)
+
+    def save_markdown(self, result, output_path: Path):
+        """
+        Saves the conversion result as Markdown.
+        """
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # docling result.document is a DoclingDocument which supports export_to_markdown
+        md_content = result.document.export_to_markdown()
+        
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(md_content)
+
+    def save_json(self, result, output_path: Path):
+        """
+        Saves the conversion result as JSON.
+        """
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # docling result.document supports export_to_dict or model_dump (pydantic)
+        # docling documents are pydantic models usually
+        import json
+        
+        # Check if it has export_to_dict or model_dump
+        if hasattr(result.document, "export_to_dict"):
+            data = result.document.export_to_dict()
+        elif hasattr(result.document, "model_dump"):
+            data = result.document.model_dump()
+        else:
+            # Fallback or error
+            raise ValueError("Document object does not support dictionary export")
+            
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
