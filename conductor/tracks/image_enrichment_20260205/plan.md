@@ -16,12 +16,12 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Enrichment Engine Core' (Protocol in workflow.md)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Enrichment Engine Core' (Protocol in workflow.md)
 
-### Phase 3: CLI Integration and Storage
-- [ ] Task: Update `extractor/docling_engine.py` or `extractor/cli.py` to invoke `EnrichmentEngine` after image extraction.
-- [ ] Task: Implement TDD for metadata storage: Write failing tests for `image_metadata.json` generation and structure.
-- [ ] Task: Implement logic to aggregate and save enrichment data into `image_metadata.json` for each image folder.
-- [ ] Task: Verify tests pass and ensure error handling (warning logs on Ollama failure).
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: CLI Integration and Storage' (Protocol in workflow.md)
+### Phase 3: CLI Integration and Storage [checkpoint: 0d56a92]
+- [x] Task: Update `extractor/docling_engine.py` or `extractor/cli.py` to invoke `EnrichmentEngine` after image extraction. [2542612]
+- [x] Task: Implement TDD for metadata storage: Write failing tests for `image_metadata.json` generation and structure. [2544310]
+- [x] Task: Implement logic to aggregate and save enrichment data into `image_metadata.json` for each image folder. [2544310]
+- [x] Task: Verify tests pass and ensure error handling (warning logs on Ollama failure). [verified]
+- [x] Task: Conductor - User Manual Verification 'Phase 3: CLI Integration and Storage' (Protocol in workflow.md)
 
 ### Phase 4: Integration Testing and Validation
 - [ ] Task: Create integration tests in `tests/test_enrichment_integration.py` to verify the full pipeline with a mock Ollama server.
