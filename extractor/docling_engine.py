@@ -96,10 +96,12 @@ class DoclingEngine:
 
     def save_images(self, result, output_dir: Path):
         """
-        Saves extracted images to the specified directory.
+        Saves extracted images to the specified directory and returns metadata.
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
+        
+        image_metadata = []
         
         # Check if document has pictures
         if hasattr(result.document, "pictures"):
@@ -107,11 +109,23 @@ class DoclingEngine:
                 # Check if picture has image data (PIL Image)
                 if hasattr(picture, "image") and picture.image is not None:
                     # Try to get page number from provenance
-                    page_no = "unknown"
+                    page_no = 0
+                    bbox = None
                     if hasattr(picture, "prov") and picture.prov:
                          # prov is a list of Prov items, usually one for the picture location
                          # Assuming Prov has page_no
                          page_no = picture.prov[0].page_no
+                         if hasattr(picture.prov[0], "bbox"):
+                             bbox = picture.prov[0].bbox
                     
                     filename = f"page_{page_no}_img_{i+1}.png"
                     picture.image.save(output_dir / filename)
+                    
+                    image_metadata.append({
+                        "filename": filename,
+                        "page_no": page_no,
+                        "bbox": bbox,
+                        "path": str(output_dir / filename)
+                    })
+        
+        return image_metadata
