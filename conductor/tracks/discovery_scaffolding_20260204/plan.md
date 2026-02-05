@@ -16,7 +16,7 @@ Focus on setting up the project structure, CLI entry point, and basic directory 
 ## Phase 2: Scaffolding and Manifest Generation
 Implement the logic to create the target directory structure and generate initial JSON manifests.
 
-- [ ] Task: Document ID and Directory Creation
+- [x] Task: Document ID and Directory Creation 8633bfe
     - [ ] Write Tests: Verify that for a given source file, the correct target sub-directory is calculated and created.
     - [ ] Implement Feature: Update `extractor/discovery.py` or create `extractor/scaffolding.py` to handle target directory creation.
 - [ ] Task: Manifest Data Extraction
