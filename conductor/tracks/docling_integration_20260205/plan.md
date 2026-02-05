@@ -21,6 +21,6 @@
 
 ## Phase 4: CLI Integration and Validation
 - [x] Task: Refactor `extractor/cli.py` to use the Docling engine by default in the `extract` command. [f5f7cd2]
-- [ ] Task: Update integration tests in `tests/test_integration.py` to verify the full Docling pipeline.
+- [x] Task: Update integration tests in `tests/test_integration.py` to verify the full Docling pipeline. [e1b0634]
 - [ ] Task: Perform a sample extraction on a representative DOJ PDF and verify the mirrored structure.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Integration and Validation' (Protocol in workflow.md)
