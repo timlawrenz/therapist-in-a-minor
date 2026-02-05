@@ -19,7 +19,7 @@ Implement the logic to create the target directory structure and generate initia
 - [x] Task: Document ID and Directory Creation 8633bfe
     - [ ] Write Tests: Verify that for a given source file, the correct target sub-directory is calculated and created.
     - [ ] Implement Feature: Update `extractor/discovery.py` or create `extractor/scaffolding.py` to handle target directory creation.
-- [ ] Task: Manifest Data Extraction
+- [x] Task: Manifest Data Extraction 1f43c3e
     - [ ] Write Tests: Verify that file size, hash, and creation date are correctly extracted from a sample file.
     - [ ] Implement Feature: Implement metadata extraction utility in `extractor/utils.py`.
 - [ ] Task: Manifest File Generation
