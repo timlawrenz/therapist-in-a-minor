@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 from unittest.mock import patch
 from click.testing import CliRunner
 from extractor.cli import cli
@@ -56,3 +57,46 @@ def test_cli_error_during_processing(tmp_path):
         assert "Error processing" in result.output
         assert "Disk full" in result.output
         assert "Errors encountered:     1" in result.output
+
+def test_cli_skips_existing_manifest(tmp_path):
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    (source_dir / "test.pdf").touch()
+    
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    
+    # Pre-create target manifest
+    doc_target = target_dir / "test"
+    doc_target.mkdir()
+    (doc_target / "manifest.json").touch()
+    
+    runner = CliRunner()
+    result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir)])
+    
+    assert result.exit_code == 0
+    assert "Skipped (already exists): 1" in result.output
+    assert "Successfully processed: 0" in result.output
+
+def test_cli_force_overwrites_existing_manifest(tmp_path):
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    (source_dir / "test.pdf").touch()
+    
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    
+    # Pre-create target manifest
+    doc_target = target_dir / "test"
+    doc_target.mkdir()
+    (doc_target / "manifest.json").write_text("old")
+    
+    runner = CliRunner()
+    # Run with --force
+    result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir), '--force'])
+    
+    assert result.exit_code == 0
+    assert "Successfully processed: 1" in result.output
+    assert "Skipped (already exists): 0" in result.output
+    # Verify it was overwritten (manifest.json should now be JSON from write_manifest, not "old")
+    assert (doc_target / "manifest.json").read_text() != "old"

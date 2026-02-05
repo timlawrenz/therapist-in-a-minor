@@ -22,7 +22,8 @@ def cli(verbose):
 @cli.command()
 @click.option('--source', required=True, type=click.Path(exists=True, file_okay=False, path_type=Path), help='Source directory path')
 @click.option('--target', required=True, type=click.Path(path_type=Path), help='Target directory path')
-def discover(source, target):
+@click.option('--force', is_flag=True, help='Force overwrite of existing processed documents')
+def discover(source, target, force):
     """
     Recursively discovers documents and creates a scaffold in the target directory.
     """
@@ -32,13 +33,20 @@ def discover(source, target):
     scaffolder = Scaffolder(source, target)
     
     count = 0
+    skipped = 0
     errors = 0
     
     try:
         for source_file in scanner.scan():
             try:
+                target_folder = scaffolder.get_target_folder(source_file)
+                if not force and scaffolder.is_processed(target_folder):
+                    logger.debug(f"Skipping already processed {source_file.relative_to(source)}...")
+                    skipped += 1
+                    continue
+
                 logger.debug(f"Processing {source_file.relative_to(source)}...")
-                target_folder = scaffolder.create_scaffold(source_file)
+                scaffolder.create_scaffold(source_file)
                 scaffolder.link_source(source_file, target_folder)
                 scaffolder.write_manifest(source_file, target_folder)
                 count += 1
@@ -52,6 +60,7 @@ def discover(source, target):
         
     click.echo(f"Processing complete.")
     click.echo(f"  Successfully processed: {count}")
+    click.echo(f"  Skipped (already exists): {skipped}")
     click.echo(f"  Errors encountered:     {errors}")
 
 if __name__ == '__main__':
