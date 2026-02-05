@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-02-05T11:36:19.499429",
+  "page_count": 0,
+  "models": {
+    "ocr_model": "https://huggingface.co/zai-org/GLM-OCR",
+    "layout_model": "https://huggingface.co/docling-project/docling-layout-heron-101"
+  },
+  "images": []
+}
