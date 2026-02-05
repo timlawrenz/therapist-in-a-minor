@@ -6,7 +6,7 @@
 - [x] Task: Update `extractor/utils.py` to load new configuration settings. [verified-existing]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
 
-### Phase 2: Enrichment Engine Core
+### Phase 2: Enrichment Engine Core [checkpoint: 8926449]
 - [x] Task: Create `extractor/enrichment_engine.py` to handle communication with Ollama. [86d91fa]
 - [x] Task: Implement TDD for `EnrichmentEngine`: Write failing tests for description and embedding generation (mocking Ollama API). [2525380]
 - [x] Task: Implement `EnrichmentEngine` methods using `llm-adapter` to generate descriptions and embeddings. [2525893]
