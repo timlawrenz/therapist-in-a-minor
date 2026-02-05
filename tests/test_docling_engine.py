@@ -1,5 +1,7 @@
 import pytest
+from pathlib import Path
 from extractor.docling_engine import DoclingEngine
+from unittest.mock import patch, MagicMock
 
 def test_docling_engine_initialization():
     engine = DoclingEngine()
@@ -14,8 +16,12 @@ def test_docling_engine_config_loading():
     }
     engine = DoclingEngine(config=config)
     assert engine.config["docling"]["ocr_model"] == "https://huggingface.co/zai-org/GLM-OCR"
-    
-    # Check if converter is initialized with options
-    # Note: In docling 2.x, DocumentConverter stores options in its format_converters
-    # or we can check the passed options if we mock the converter.
     assert engine.converter is not None
+
+def test_docling_engine_convert():
+    engine = DoclingEngine()
+    mock_result = MagicMock()
+    with patch.object(engine.converter, 'convert', return_value=mock_result) as mock_convert:
+        result = engine.convert(Path("test.pdf"))
+        mock_convert.assert_called_once_with(Path("test.pdf"))
+        assert result == mock_result
