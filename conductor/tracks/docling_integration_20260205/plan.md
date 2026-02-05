@@ -3,7 +3,7 @@
 ## Phase 1: Environment and Setup
 - [x] Task: Update `requirements.txt` with `docling` and necessary AI/ML dependencies. [4bae7f8]
 - [x] Task: Design and implement `config.yaml` to store model paths and extraction settings. [151715c]
-- [ ] Task: Implement a configuration loader in `extractor/utils.py` to read settings.
+- [x] Task: Implement a configuration loader in `extractor/utils.py` to read settings. [ba26571]
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
 
 ## Phase 2: Docling Engine Core
