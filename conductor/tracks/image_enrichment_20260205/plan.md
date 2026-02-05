@@ -23,7 +23,7 @@
 - [x] Task: Verify tests pass and ensure error handling (warning logs on Ollama failure). [verified]
 - [x] Task: Conductor - User Manual Verification 'Phase 3: CLI Integration and Storage' (Protocol in workflow.md)
 
-### Phase 4: Integration Testing and Validation
-- [ ] Task: Create integration tests in `tests/test_enrichment_integration.py` to verify the full pipeline with a mock Ollama server.
-- [ ] Task: Perform a manual verification run with a live local Ollama instance and sample PDF.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Integration Testing and Validation' (Protocol in workflow.md)
+### Phase 4: Integration Testing and Validation [checkpoint: cb5f7f6]
+- [x] Task: Create integration tests in `tests/test_enrichment_integration.py` to verify the full pipeline with a mock Ollama server. [2547131]
+- [x] Task: Perform a manual verification run with a live local Ollama instance and sample PDF. [verified]
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Integration Testing and Validation' (Protocol in workflow.md)
