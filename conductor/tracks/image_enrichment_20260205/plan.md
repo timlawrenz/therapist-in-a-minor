@@ -7,10 +7,13 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
 
 ### Phase 2: Enrichment Engine Core
-- [ ] Task: Create `extractor/enrichment_engine.py` to handle communication with Ollama.
-- [ ] Task: Implement TDD for `EnrichmentEngine`: Write failing tests for description and embedding generation (mocking Ollama API).
-- [ ] Task: Implement `EnrichmentEngine` methods using `llm-adapter` to generate descriptions and embeddings.
-- [ ] Task: Verify tests pass and refine implementation.
+- [x] Task: Create `extractor/enrichment_engine.py` to handle communication with Ollama. [86d91fa]
+- [x] Task: Implement TDD for `EnrichmentEngine`: Write failing tests for description and embedding generation (mocking Ollama API). [2525380]
+- [x] Task: Implement `EnrichmentEngine` methods using `llm-adapter` to generate descriptions and embeddings. [2525893]
+- [x] Task: Update `requirements.txt` with `transformers` and `torch`. [2537156]
+- [x] Task: Refactor `EnrichmentEngine` to use `transformers` for DINOv2 and CLIP embeddings. [2540348]
+- [x] Task: Verify tests pass and refine implementation. [verified]
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Enrichment Engine Core' (Protocol in workflow.md)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Enrichment Engine Core' (Protocol in workflow.md)
 
 ### Phase 3: CLI Integration and Storage

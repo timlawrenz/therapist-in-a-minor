@@ -5,9 +5,11 @@ This track enhances the extraction pipeline by automatically enriching every ext
 
 ### Functional Requirements
 - **Integration:** Integrate the enrichment process directly into the existing `extract` command.
-- **Text Description:** Generate a natural language description of each extracted image using a VLM (e.g., LLaVA) via Ollama.
-- **Embeddings:** Generate both DINOv2 and CLIP embeddings for each image using Ollama's embedding API.
-- **Configurable Models:** Allow the user to specify the Ollama base URL and the specific model names for descriptions and embeddings in `config.yaml`.
+- **Text Description:** Generate a natural language description of each extracted image using a VLM (e.g., LLaVA, Gemma 3) via Ollama.
+- **Embeddings:** Generate both DINOv2 and CLIP embeddings for each image using Hugging Face `transformers` library.
+- **Configurable Models:** Allow the user to specify:
+    - Ollama model name for descriptions (e.g., `gemma3:27b`).
+    - Hugging Face model IDs for DINOv2 and CLIP embeddings in `config.yaml`.
 - **Storage:** For every directory containing extracted images, generate a single `image_metadata.json` file.
     - This file should map each image filename to its description and embedding vectors (or references to them).
 - **Error Handling:** Ensure that failures in enrichment (e.g., Ollama offline) are logged but do not halt the primary text extraction process.
