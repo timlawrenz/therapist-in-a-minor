@@ -6,7 +6,7 @@
 - [x] Task: Implement a configuration loader in `extractor/utils.py` to read settings. [ba26571]
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
 
-## Phase 2: Docling Engine Core
+## Phase 2: Docling Engine Core [checkpoint: 986663f]
 - [x] Task: Create `extractor/docling_engine.py` (or update `discovery.py`) to wrap Docling's `DocumentConverter`. [8540f0a]
 - [x] Task: Configure `DocumentConverter` to use GLM-OCR and Heron-101 models as specified in `config.yaml`. [e90c458]
 - [x] Task: Implement a basic extraction method that takes a PDF path and returns a Docling `ConversionResult`. [3f16cf2]
