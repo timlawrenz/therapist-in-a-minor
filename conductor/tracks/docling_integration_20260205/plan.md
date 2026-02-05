@@ -16,7 +16,7 @@
 - [x] Task: Implement JSON and high-fidelity Markdown export using Docling's native serializers. [60d33c3]
 - [x] Task: Implement image extraction logic and saving to a mirrored directory structure. [5e2ac6b]
 - [x] Task: Implement lineage mapping to capture page numbers and coordinates for all extracted assets. [c935a29]
-- [ ] Task: Implement the manifest/metadata generator to tie all assets together with their source PDF.
+- [x] Task: Implement the manifest/metadata generator to tie all assets together with their source PDF. [977f372]
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Extraction, Lineage, and Mirrored Storage' (Protocol in workflow.md)
 
 ## Phase 4: CLI Integration and Validation
