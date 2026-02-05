@@ -61,3 +61,43 @@ def test_docling_engine_export():
         # Verify file writes (basic check)
 
         assert mock_file.call_count >= 2
+
+
+
+def test_docling_engine_save_images():
+
+    engine = DoclingEngine()
+
+    mock_result = MagicMock()
+
+    output_dir = Path("tmp_output")
+
+    
+
+    # Mock picture item
+
+    mock_pic = MagicMock()
+
+    mock_pic.image = MagicMock() # PIL Image mock
+
+    # Mock provenance to get page number or info (optional but good for naming)
+
+    mock_pic.prov = [MagicMock(page_no=1)]
+
+    mock_pic.self_ref = "#/pictures/1"
+
+    
+
+    # Mock document.pictures iteration
+
+    mock_result.document.pictures = [mock_pic]
+
+    
+
+    engine.save_images(mock_result, output_dir)
+
+    
+
+    mock_pic.image.save.assert_called()
+
+

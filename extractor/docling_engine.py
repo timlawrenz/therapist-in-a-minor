@@ -93,3 +93,25 @@ class DoclingEngine:
             
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def save_images(self, result, output_dir: Path):
+        """
+        Saves extracted images to the specified directory.
+        """
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Check if document has pictures
+        if hasattr(result.document, "pictures"):
+            for i, picture in enumerate(result.document.pictures):
+                # Check if picture has image data (PIL Image)
+                if hasattr(picture, "image") and picture.image is not None:
+                    # Try to get page number from provenance
+                    page_no = "unknown"
+                    if hasattr(picture, "prov") and picture.prov:
+                         # prov is a list of Prov items, usually one for the picture location
+                         # Assuming Prov has page_no
+                         page_no = picture.prov[0].page_no
+                    
+                    filename = f"page_{page_no}_img_{i+1}.png"
+                    picture.image.save(output_dir / filename)
