@@ -1,7 +1,7 @@
 # Implementation Plan: Docling Integration
 
 ## Phase 1: Environment and Setup
-- [~] Task: Update `requirements.txt` with `docling` and necessary AI/ML dependencies.
+- [x] Task: Update `requirements.txt` with `docling` and necessary AI/ML dependencies. [4bae7f8]
 - [ ] Task: Design and implement `config.yaml` to store model paths and extraction settings.
 - [ ] Task: Implement a configuration loader in `extractor/utils.py` to read settings.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
