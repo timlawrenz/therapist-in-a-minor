@@ -8,6 +8,7 @@
 
 ## AI Enrichment & Computer Vision
 - **Hugging Face Transformers / Accelerate**: The framework for running Vision-Language Models (VLMs) for image description and generating DINO/CLIP embeddings.
+- **Ollama**: Local inference engine for running Vision-Language Models (VLMs) like LLaVA or Gemma 3 to generate image descriptions.
 - **OpenCV / Pillow**: For pre-processing extracted images (cropping, resizing, format conversion) prior to AI analysis.
 
 ## Data Storage & Lineage
