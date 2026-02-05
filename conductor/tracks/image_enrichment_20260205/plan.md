@@ -1,10 +1,10 @@
 # Implementation Plan: Image Enrichment
 
-### Phase 1: Environment and Setup
+### Phase 1: Environment and Setup [checkpoint: 3cb22a9]
 - [x] Task: Update `requirements.txt` to include `llm-adapter`. [2517537]
 - [x] Task: Update `config.yaml` to include Ollama and `llm-adapter` settings (base URL, model names). [2518593]
 - [x] Task: Update `extractor/utils.py` to load new configuration settings. [verified-existing]
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
 
 ### Phase 2: Enrichment Engine Core
 - [ ] Task: Create `extractor/enrichment_engine.py` to handle communication with Ollama.
