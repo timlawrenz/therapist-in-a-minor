@@ -24,7 +24,7 @@ This project aims to create a high-fidelity, machine-readable derivative of the 
 
 ## Usage
 
-The tool offers two main commands: `discover` and `extract`.
+The tool offers three commands: `discover`, `extract`, and `process` (recommended).
 
 ### 1. Discovery
 Recursively scans a source directory for documents (PDFs) and creates a structured scaffolding in the target directory.
@@ -34,17 +34,24 @@ python -m extractor.cli discover --source /path/to/source --target /path/to/targ
 ```
 
 ### 2. Extraction
-Extracts text, layouts, and images from the documents using **Docling**. It also performs AI enrichment on extracted images (descriptions and embeddings).
+Extracts text, layouts, and images from the documents using **Docling**. It also performs AI enrichment on extracted images (descriptions, embeddings, and faces).
 
 ```bash
 python -m extractor.cli extract --source /path/to/source --target /path/to/target
+```
+
+### 3. Process (recommended)
+Runs discovery + extraction in a single step.
+
+```bash
+python -m extractor.cli process --source /path/to/source --target /path/to/target
 ```
 
 ### Options
 -   `--source <path>`: (Required) Path to the source directory containing the DOJ files.
 -   `--target <path>`: (Required) Path where the processed dataset will be created.
 -   `--force`: Force overwrite of existing processed documents.
--   `--verbose`: Enable verbose logging (DEBUG level).
+-   `--verbose`: Enable verbose logging (DEBUG level). This is a global option and must be passed before the command, e.g. `python -m extractor.cli --verbose extract ...`.
 
 ## Configuration
 
