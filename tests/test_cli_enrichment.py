@@ -37,6 +37,7 @@ def test_extract_command_invokes_enrichment(MockScanner, MockDoclingEngine, Mock
     mock_enrichment = MockEnrichmentEngine.return_value
     mock_enrichment.describe_image.return_value = "A description"
     mock_enrichment.embed_image.return_value = {"dino": [0.1], "clip": [0.2]}
+    mock_enrichment.extract_faces.return_value = [{"bbox": [1, 2, 3, 4], "embedding": [0.5, 0.6]}]
     
     runner = CliRunner()
     result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
@@ -61,3 +62,5 @@ def test_extract_command_invokes_enrichment(MockScanner, MockDoclingEngine, Mock
     assert len(data) == 1
     assert data[0]["description"] == "A description"
     assert data[0]["embeddings"]["dino"] == [0.1]
+    assert data[0]["faces"][0]["bbox"] == [1, 2, 3, 4]
+    assert data[0]["faces"][0]["embedding"] == [0.5, 0.6]

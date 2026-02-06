@@ -79,15 +79,16 @@ def test_docling_engine_save_images_returns_metadata(tmp_path):
     engine = DoclingEngine()
     mock_result = MagicMock()
     output_dir = tmp_path
-    
+
     mock_pic = MagicMock()
-    
+
     # Mock ImageRef structure
     mock_pil_image = MagicMock()
+
     class MockImageRef:
         def __init__(self, pil):
             self.pil_image = pil
-    
+
     mock_image_ref = MockImageRef(mock_pil_image)
     mock_pic.image = mock_image_ref
 
@@ -99,15 +100,41 @@ def test_docling_engine_save_images_returns_metadata(tmp_path):
     mock_bbox.as_tuple.return_value = (0, 0, 100, 100)
     prov.bbox = mock_bbox
     mock_pic.prov = [prov]
-    
+
     mock_result.document.pictures = [mock_pic]
-    
+
     metadata = engine.save_images(mock_result, output_dir)
-    
+
     assert metadata is not None
     assert len(metadata) == 1
     assert metadata[0]["page_no"] == 1
     assert "page_1_img_1.png" in str(metadata[0]["filename"])
+
+
+def test_docling_engine_save_images_pdfimages_fallback(tmp_path):
+    engine = DoclingEngine()
+    mock_result = MagicMock()
+    output_dir = tmp_path
+
+    mock_result.document.pictures = []
+    mock_result.input = MagicMock(file=tmp_path / "test.pdf")
+    mock_result.input.file.write_bytes(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+
+    def fake_run(cmd, check, stdout, stderr):
+        # simulate pdfimages output naming: <prefix>-001-000.png
+        prefix = Path(cmd[-1])
+        (prefix.parent / f"{prefix.name}-001-000.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    with patch("shutil.which", return_value="/usr/bin/pdfimages"), patch(
+        "subprocess.run", side_effect=fake_run
+    ):
+        meta = engine.save_images(mock_result, output_dir)
+
+    assert len(meta) == 1
+    assert meta[0]["page_no"] == 1
+    assert meta[0]["bbox"] is None
+    assert meta[0]["filename"] == "page_1_img_1.png"
+    assert (output_dir / "page_1_img_1.png").exists()
 
 def test_docling_engine_manifest(tmp_path):
     engine = DoclingEngine()

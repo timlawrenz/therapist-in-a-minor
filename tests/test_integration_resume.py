@@ -26,6 +26,7 @@ def test_full_pipeline_resume(MockScanner, MockDocling, MockEnrichment, tmp_path
     mock_enrichment_instance = MockEnrichment.return_value
     mock_enrichment_instance.describe_image.return_value = "desc"
     mock_enrichment_instance.embed_image.return_value = {"dino": [0.1]}
+    mock_enrichment_instance.extract_faces.return_value = []
     
     # First run: should extract
     # We need to simulate save_images creating files so next run sees them

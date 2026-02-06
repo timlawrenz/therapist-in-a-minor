@@ -1,5 +1,8 @@
 import os
 import logging
+import re
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -43,7 +46,9 @@ class DoclingEngine:
             
         # OCR configuration
         ocr_model_id = docling_config.get("ocr_model")
-        if ocr_model_id:
+        if "do_ocr" in docling_config:
+            pipeline_options.do_ocr = bool(docling_config.get("do_ocr"))
+        elif ocr_model_id:
             pipeline_options.do_ocr = True
     
         # Enable image extraction as per vision
@@ -97,15 +102,63 @@ class DoclingEngine:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
+    def _extract_images_with_pdfimages(self, pdf_path: Path, output_dir: Path):
+        """Best-effort fallback extraction for PDFs that contain only embedded XObject images.
+
+        This is used only when Docling emits zero pictures.
+        """
+        if not pdf_path or not pdf_path.exists():
+            return []
+        if shutil.which("pdfimages") is None:
+            return []
+
+        prefix = output_dir / "pdfimage"
+        try:
+            subprocess.run(
+                ["pdfimages", "-png", "-p", str(pdf_path), str(prefix)],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception as e:
+            logger.debug(f"pdfimages extraction failed for {pdf_path}: {e}")
+            return []
+
+        out = []
+        pattern = re.compile(r"-(\d+)-(\d+)\.png$")
+        for img_file in sorted(output_dir.glob(f"{prefix.name}-*.png")):
+            m = pattern.search(img_file.name)
+            if not m:
+                continue
+
+            page_no = int(m.group(1))
+            img_idx = int(m.group(2)) + 1
+            target_name = f"page_{page_no}_img_{img_idx}.png"
+            target_path = output_dir / target_name
+
+            if not target_path.exists():
+                img_file.rename(target_path)
+            else:
+                target_path = img_file
+
+            out.append(
+                {
+                    "filename": target_path.name,
+                    "page_no": page_no,
+                    "bbox": None,
+                    "path": str(target_path),
+                }
+            )
+
+        return out
+
     def save_images(self, result, output_dir: Path):
-        """
-        Saves extracted images to the specified directory and returns metadata.
-        """
+        """Saves extracted images to the specified directory and returns metadata."""
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         image_metadata = []
-        
+
         # Check if document has pictures
         if hasattr(result.document, "pictures"):
             for i, picture in enumerate(result.document.pictures):
@@ -115,30 +168,38 @@ class DoclingEngine:
                     page_no = 0
                     bbox = None
                     if hasattr(picture, "prov") and picture.prov:
-                         # prov is a list of Prov items, usually one for the picture location
-                         # Assuming Prov has page_no
-                         page_no = picture.prov[0].page_no
-                         if hasattr(picture.prov[0], "bbox") and picture.prov[0].bbox:
-                             bbox = picture.prov[0].bbox.as_tuple()
-                    
+                        # prov is a list of Prov items, usually one for the picture location
+                        # Assuming Prov has page_no
+                        page_no = picture.prov[0].page_no
+                        if hasattr(picture.prov[0], "bbox") and picture.prov[0].bbox:
+                            bbox = picture.prov[0].bbox.as_tuple()
+
                     filename = f"page_{page_no}_img_{i+1}.png"
-                    
+
                     # Handle Docling ImageRef
                     img = picture.image
                     if hasattr(img, "pil_image"):
                         img = img.pil_image
-                        
+
                     if img is not None:
                         img.save(output_dir / filename)
                         logger.debug(f"Extracted image: {filename} to {output_dir}")
-                    
-                        image_metadata.append({
-                            "filename": filename,
-                            "page_no": page_no,
-                            "bbox": bbox,
-                            "path": str(output_dir / filename)
-                        })
-        
+
+                        image_metadata.append(
+                            {
+                                "filename": filename,
+                                "page_no": page_no,
+                                "bbox": bbox,
+                                "path": str(output_dir / filename),
+                            }
+                        )
+
+        if not image_metadata:
+            pdf_path = None
+            if hasattr(result, "input") and hasattr(result.input, "file"):
+                pdf_path = Path(result.input.file)
+            image_metadata = self._extract_images_with_pdfimages(pdf_path, output_dir)
+
         return image_metadata
 
     def generate_manifest(self, result, output_path: Path, image_metadata: list):

@@ -6,7 +6,7 @@ enrichment:
   description_model: "gemma3:27b"
   embedding_model_dino: "facebook/dinov2-base"
   embedding_model_clip: "openai/clip-vit-base-patch32"
-  
+
   facial:
     enabled: true
     model_name: "buffalo_l"

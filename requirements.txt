@@ -7,6 +7,5 @@ numpy
 transformers
 torch
 pillow
-
 insightface
 onnxruntime
