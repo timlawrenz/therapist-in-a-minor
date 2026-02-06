@@ -18,7 +18,7 @@
 - [x] Task: Update logging to provide clear feedback on skipped documents. [verified]
 - [x] Task: Conductor - User Manual Verification 'Phase 2: CLI Integration' (Protocol in workflow.md)
 
-### Phase 3: Integration Validation
-- [ ] Task: Create a full pipeline test in `tests/test_integration_resume.py` that runs extraction twice and confirms the second run skips all files.
-- [ ] Task: Perform manual verification on the DOJ dataset (e.g., process 2 files, stop, run again).
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Integration Validation' (Protocol in workflow.md)
+### Phase 3: Integration Validation [checkpoint: 79923c5]
+- [x] Task: Create a full pipeline test in `tests/test_integration_resume.py` that runs extraction twice and confirms the second run skips all files. [verified]
+- [x] Task: Perform manual verification on the DOJ dataset (e.g., process 2 files, stop, run again). [verified]
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Integration Validation' (Protocol in workflow.md)
