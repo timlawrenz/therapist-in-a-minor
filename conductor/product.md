@@ -29,6 +29,7 @@ Create a high-fidelity, machine-readable derivative of the DOJ Disclosures of HR
 
 ## Key Features
 - **Hierarchical Extraction:** A processing pipeline that mirrors the source directory structure, creating sidecar Markdown files for text and sub-directories for images.
+- **Resumable Processing:** Intelligent skipping of already-processed documents to facilitate efficient batch processing and recovery from interruptions.
 - **Layout-Aware Text Extraction:** Capture text while attempting to preserve columns, tables, and headers to maintain context.
 - **Asset Manifests:** JSON sidecars for every PDF that link every text block and image to its precise location in the original document.
 - **Multimodal Enrichment:**
