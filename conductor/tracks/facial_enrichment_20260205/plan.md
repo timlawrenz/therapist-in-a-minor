@@ -1,6 +1,6 @@
 # Implementation Plan: Facial Detection and Embedding
 
-### Phase 1: Environment and Setup
+### Phase 1: Environment and Setup [checkpoint: bd5563c]
 - [x] Task: Update `requirements.txt` to include `deepface`, `retina-face`, and `tf-keras` (Switched to `insightface` and `onnxruntime` due to TF issues on Py3.14). [verified]
 - [x] Task: Update `config.yaml` to include an `enrichment.facial` section with toggle and model selection. [verified]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
