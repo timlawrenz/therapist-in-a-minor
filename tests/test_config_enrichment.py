@@ -49,5 +49,5 @@ def test_default_config_structure():
     assert "embedding_model_clip" in config["enrichment"]
     assert "facial" in config["enrichment"]
     assert "enabled" in config["enrichment"]["facial"]
-    assert "retinaface" in config["enrichment"]["facial"]
-    assert "facenet" in config["enrichment"]["facial"]
+    assert "model_name" in config["enrichment"]["facial"]
+    assert "det_thresh" in config["enrichment"]["facial"]

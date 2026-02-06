@@ -5,7 +5,7 @@ from extractor.cli import cli
 import json
 import torch
 
-@patch("extractor.enrichment_engine.EnrichmentEngine.extract_faces")
+@patch("extractor.cli.FacialEngine")
 @patch("extractor.enrichment_engine.Image")
 @patch("extractor.enrichment_engine.BitImageProcessor")
 @patch("extractor.enrichment_engine.Dinov2Model")
@@ -16,7 +16,7 @@ import torch
 @patch("extractor.cli.Scanner")
 def test_full_pipeline_enrichment(MockScanner, MockDocling, MockOllamaClient, 
                                   MockCLIPModel, MockCLIPProcessor, 
-                                  MockDinoModel, MockDinoProcessor, MockImage, MockExtractFaces, tmp_path):
+                                  MockDinoModel, MockDinoProcessor, MockImage, MockFacialEngine, tmp_path):
     # Setup
     source_dir = tmp_path / "source"
     source_dir.mkdir()
@@ -48,8 +48,10 @@ def test_full_pipeline_enrichment(MockScanner, MockDocling, MockOllamaClient,
     mock_ollama = MockOllamaClient.return_value
     mock_ollama.generate.return_value = {"response": "Mock Description"}
     
-    # Mock HF Models (return dummy tensors)
-    MockExtractFaces.return_value = [{"bbox": [10, 20, 30, 40], "embedding": [0.9]}]
+    # Mock faces
+    mock_facial = MockFacialEngine.return_value
+    mock_facial.enabled = True
+    mock_facial.detect_faces.return_value = [{"bbox": [10, 20, 30, 40], "embedding": [0.9]}]
     # We mock the instance returned by from_pretrained
     mock_dino_model = MockDinoModel.from_pretrained.return_value
     mock_dino_output = MagicMock()

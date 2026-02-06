@@ -1,11 +1,9 @@
 import pytest
 import importlib
 
-def test_deepface_installed():
-    """
-    Test that deepface is installed and importable.
-    """
+def test_insightface_installed():
+    """Test that insightface is installed and importable."""
     try:
-        importlib.import_module("deepface")
+        importlib.import_module("insightface")
     except ImportError:
-        pytest.fail("deepface is not installed")
+        pytest.fail("insightface is not installed")

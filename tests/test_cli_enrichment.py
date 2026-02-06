@@ -4,10 +4,11 @@ from pathlib import Path
 from click.testing import CliRunner
 from extractor.cli import cli
 
+@patch("extractor.cli.FacialEngine")
 @patch("extractor.cli.EnrichmentEngine")
 @patch("extractor.cli.DoclingEngine")
 @patch("extractor.cli.Scanner")
-def test_extract_command_invokes_enrichment(MockScanner, MockDoclingEngine, MockEnrichmentEngine, tmp_path):
+def test_extract_command_invokes_enrichment(MockScanner, MockDoclingEngine, MockEnrichmentEngine, MockFacialEngine, tmp_path):
     # Setup
     source_dir = tmp_path / "source"
     source_dir.mkdir()
@@ -37,7 +38,10 @@ def test_extract_command_invokes_enrichment(MockScanner, MockDoclingEngine, Mock
     mock_enrichment = MockEnrichmentEngine.return_value
     mock_enrichment.describe_image.return_value = "A description"
     mock_enrichment.embed_image.return_value = {"dino": [0.1], "clip": [0.2]}
-    mock_enrichment.extract_faces.return_value = [{"bbox": [1, 2, 3, 4], "embedding": [0.5, 0.6]}]
+
+    mock_facial = MockFacialEngine.return_value
+    mock_facial.enabled = True
+    mock_facial.detect_faces.return_value = [{"bbox": [1, 2, 3, 4], "embedding": [0.5, 0.6]}]
     
     runner = CliRunner()
     result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
