@@ -6,6 +6,7 @@ from .discovery import Scanner
 from .scaffolding import Scaffolder
 from .docling_engine import DoclingEngine
 from .enrichment_engine import EnrichmentEngine
+from .facial_engine import FacialEngine
 import json
 
 # Configure logging
@@ -89,6 +90,7 @@ def extract(source, target, force):
     try:
         engine = DoclingEngine()
         enrichment_engine = EnrichmentEngine()
+        facial_engine = FacialEngine() # Initialize FacialEngine
         scanner = Scanner(source)
         scaffolder = Scaffolder(source, target)
         
@@ -140,9 +142,13 @@ def extract(source, target, force):
                         
                         description = enrichment_engine.describe_image(img_path)
                         embeddings = enrichment_engine.embed_image(img_path)
+                        faces = []
+                        if facial_engine.enabled:
+                            faces = facial_engine.detect_faces(img_path) # Conditionally call facial engine
                         
                         img_data["description"] = description
                         img_data["embeddings"] = embeddings
+                        img_data["faces"] = faces # Add faces to metadata
                     
                     # Save image_metadata.json
                     images_dir = output_dir / "images"
