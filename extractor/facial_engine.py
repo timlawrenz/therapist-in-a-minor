@@ -31,8 +31,8 @@ class FacialEngine:
         try:
             logger.info("Initializing InsightFace... This may take a few minutes to download models on the first run.")
             self.app = FaceAnalysis(name=self.model_name)
-            self.app.prepare(ctx_id=0, det_thresh=self.det_thresh) # ctx_id=0 for GPU, -1 for CPU
-            logger.info(f"InsightFace model '{self.model_name}' loaded successfully.")
+            self.app.prepare(ctx_id=-1, det_thresh=self.det_thresh) # ctx_id=0 for GPU, -1 for CPU
+            logger.info(f"InsightFace model '{self.model_name}' loaded successfully (forced CPU).")
         except Exception as e:
             logger.error(f"Failed to load InsightFace model '{self.model_name}': {e}")
             self.app = None
