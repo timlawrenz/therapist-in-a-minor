@@ -5,12 +5,12 @@
 - [x] Task: Update `config.yaml` to include an `enrichment.facial` section with toggle and model selection. [verified]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
 
-### Phase 2: Facial Enrichment Engine
-- [ ] Task: Create `extractor/facial_engine.py` to wrap RetinaFace and FaceNet.
-- [ ] Task: Implement TDD for `FacialEngine`: Write failing tests for face detection and embedding generation (mocking model weights).
-- [ ] Task: Implement `FacialEngine` methods to detect faces and generate embeddings.
-- [ ] Task: Verify tests pass and refine implementation.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Facial Enrichment Engine' (Protocol in workflow.md)
+### Phase 2: Facial Enrichment Engine [checkpoint: 7e09f77]
+- [x] Task: Create `extractor/facial_engine.py` to wrap RetinaFace and FaceNet. [verified]
+- [x] Task: Implement TDD for `FacialEngine`: Write failing tests for face detection and embedding generation (mocking model weights). [verified]
+- [x] Task: Implement `FacialEngine` methods to detect faces and generate embeddings. [verified]
+- [x] Task: Verify tests pass and refine implementation. [verified]
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Facial Enrichment Engine' (Protocol in workflow.md)
 
 ### Phase 3: Integration and Storage
 - [ ] Task: Update `extractor/cli.py` to invoke `FacialEngine` during the enrichment loop.
