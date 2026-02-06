@@ -29,6 +29,7 @@ class FacialEngine:
         self.det_thresh = facial_config.get("det_thresh", 0.5)
         
         try:
+            logger.info("Initializing InsightFace... This may take a few minutes to download models on the first run.")
             self.app = FaceAnalysis(name=self.model_name)
             self.app.prepare(ctx_id=0, det_thresh=self.det_thresh) # ctx_id=0 for GPU, -1 for CPU
             logger.info(f"InsightFace model '{self.model_name}' loaded successfully.")
