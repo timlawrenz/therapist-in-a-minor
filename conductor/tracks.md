@@ -6,12 +6,14 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] **Track: Allow extraction to be resumable by checking for existing artifacts and manifest.**
-*Link: [./tracks/resumable_extraction_20260205/](./tracks/resumable_extraction_20260205/)*
+(No active tracks)
 
 ---
 
 ## Archived Tracks
+
+- [x] **Track: Allow extraction to be resumable by checking for existing artifacts and manifest.**
+*Link: [./archive/resumable_extraction_20260205/](./archive/resumable_extraction_20260205/)*
 
 - [x] **Track: Create for every extracted image a) a text description of what's visible in an extracted image, and b) a DINOv2 and a CLIP embedding using llm-adapter and Ollama.**
 *Link: [./archive/image_enrichment_20260205/](./archive/image_enrichment_20260205/)*
