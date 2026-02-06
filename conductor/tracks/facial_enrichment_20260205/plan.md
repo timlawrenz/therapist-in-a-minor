@@ -1,9 +1,9 @@
 # Implementation Plan: Facial Detection and Embedding
 
 ### Phase 1: Environment and Setup
-- [ ] Task: Update `requirements.txt` to include `deepface`, `retina-face`, and `tf-keras`.
-- [ ] Task: Update `config.yaml` to include an `enrichment.facial` section with toggle and model selection.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
+- [x] Task: Update `requirements.txt` to include `deepface`, `retina-face`, and `tf-keras` (Switched to `insightface` and `onnxruntime` due to TF issues on Py3.14). [verified]
+- [x] Task: Update `config.yaml` to include an `enrichment.facial` section with toggle and model selection. [verified]
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Environment and Setup' (Protocol in workflow.md)
 
 ### Phase 2: Facial Enrichment Engine
 - [ ] Task: Create `extractor/facial_engine.py` to wrap RetinaFace and FaceNet.

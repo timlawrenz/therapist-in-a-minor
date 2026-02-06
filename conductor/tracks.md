@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] **Track: Identify faces in images using RetinaFace and create embeddings for detected faces using FaceNet, preserving absolute lineage in image_metadata.json.**
+- [~] **Track: Identify faces in images using RetinaFace and create embeddings for detected faces using FaceNet, preserving absolute lineage in image_metadata.json.**
 *Link: [./tracks/facial_enrichment_20260205/](./tracks/facial_enrichment_20260205/)*
 
 ---

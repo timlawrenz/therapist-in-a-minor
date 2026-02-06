@@ -1,8 +1,0 @@
-{
-  "track_id": "image_enrichment_20260205",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-05T15:47:00Z",
-  "updated_at": "2026-02-05T15:47:00Z",
-  "description": "Create for every extracted image a) a text description of what's visible in an extracted image, and b) a DINOv2 and a CLIP embedding using llm-adapter and Ollama."
-}

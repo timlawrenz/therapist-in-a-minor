@@ -2,7 +2,12 @@ docling:
   ocr_model: "https://huggingface.co/zai-org/GLM-OCR"
   layout_model: "https://huggingface.co/docling-project/docling-layout-heron-101"
 enrichment:
-  ollama_host: "http://localhost:11434"
-  description_model: "llava"
-  embedding_model_dino: "dinov2" # Note: Ensure this model exists in Ollama or mapped correctly
-  embedding_model_clip: "clip"   # Note: Ensure this model exists in Ollama or mapped correctly
+  ollama_host: "http://192.168.86.137:11434"
+  description_model: "gemma3:27b"
+  embedding_model_dino: "facebook/dinov2-base"
+  embedding_model_clip: "openai/clip-vit-base-patch32"
+  
+  facial:
+    enabled: true
+    model_name: "buffalo_l"
+    det_thresh: 0.5

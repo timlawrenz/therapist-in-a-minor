@@ -1,8 +1,0 @@
-{
-  "track_id": "resumable_extraction_20260205",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-05T16:08:00Z",
-  "updated_at": "2026-02-05T16:08:00Z",
-  "description": "Allow extraction to be resumable by checking for existing artifacts and manifest."
-}
