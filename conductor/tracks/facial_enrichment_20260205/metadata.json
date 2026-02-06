@@ -1,0 +1,8 @@
+{
+  "track_id": "facial_enrichment_20260205",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-05T16:20:00Z",
+  "updated_at": "2026-02-05T16:20:00Z",
+  "description": "Identify faces in images using RetinaFace and create embeddings for detected faces using FaceNet, preserving absolute lineage in image_metadata.json."
+}
