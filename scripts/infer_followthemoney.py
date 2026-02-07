@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -45,6 +46,13 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        stream=sys.stderr,
+    )
+
     factual = args.factual or (args.target / "followthemoney.ndjson")
     out = args.out or (args.target / "followthemoney.inferred.ndjson")
 

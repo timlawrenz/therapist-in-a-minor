@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +12,8 @@ import ollama
 from followthemoney import model
 
 from .utils import load_config
+
+logger = logging.getLogger(__name__)
 
 
 SCHEMA_WHITELIST: Tuple[str, ...] = (
@@ -195,13 +198,31 @@ def _infer_raw(
         f"{evidence.text}\n"
     )
 
+    if verbose:
+        logger.debug(
+            "ollama.generate start kind=%s proof=%s chars=%d",
+            evidence.kind,
+            evidence.proof_id,
+            len(evidence.text or ""),
+        )
+
     try:
         resp = client.generate(model=model_name, prompt=prompt)
     except Exception as exc:
         if verbose:
-            import sys
-
-            print(f"[infer] ollama generate failed for {evidence.kind} {evidence.proof_id}: {exc}", file=sys.stderr)
+            logger.exception(
+                "ollama.generate failed kind=%s proof=%s: %s",
+                evidence.kind,
+                evidence.proof_id,
+                exc,
+            )
+        else:
+            logger.error(
+                "ollama.generate failed kind=%s proof=%s: %s",
+                evidence.kind,
+                evidence.proof_id,
+                exc,
+            )
         return []
     raw = (resp or {}).get("response", "")
     json_text = _extract_json_array(raw)
@@ -233,11 +254,9 @@ def infer_stream(
         model_name = enrichment.get("description_model", "llava")
 
     if verbose:
-        import sys
-
-        print(f"[infer] factual={Path(factual_ndjson)}", file=sys.stderr)
-        print(f"[infer] out={Path(out_path)}", file=sys.stderr)
-        print(f"[infer] ollama_host={ollama_host} model={model_name}", file=sys.stderr)
+        logger.info("factual=%s", Path(factual_ndjson))
+        logger.info("out=%s", Path(out_path))
+        logger.info("ollama_host=%s model=%s", ollama_host, model_name)
 
     client = ollama.Client(host=ollama_host)
 
@@ -246,9 +265,7 @@ def infer_stream(
 
     factual_ndjson = Path(factual_ndjson)
     if not factual_ndjson.exists():
-        import sys
-
-        print(f"[infer] missing factual NDJSON: {factual_ndjson}", file=sys.stderr)
+        logger.error("missing factual NDJSON: %s", factual_ndjson)
         return 2
 
     emitted: Dict[str, Any] = {}
@@ -257,11 +274,11 @@ def infer_stream(
     for evidence in iter_factual_evidence(factual_ndjson, max_chars=max_chars):
         evidence_count += 1
         if verbose and evidence_count % 25 == 0:
-            import sys
-
-            print(f"[infer] processed evidence: {evidence_count} (entities: {len(emitted)})", file=sys.stderr)
+            logger.info("processed evidence=%d entities=%d", evidence_count, len(emitted))
 
         raw_items = _infer_raw(client, model_name, evidence, verbose=verbose)
+        if verbose and evidence_count <= 3:
+            logger.info("received %d inferred items for proof=%s", len(raw_items), evidence.proof_id)
 
         # per-proof local caches to allow Event linking by name
         persons: Dict[str, str] = {}
@@ -418,11 +435,11 @@ def infer_stream(
             out.write(json.dumps(ent.to_dict(), ensure_ascii=False) + "\n")
 
     if verbose:
-        import sys
-
-        print(
-            f"[infer] wrote {out_path} (entities: {len(emitted)}, evidence: {evidence_count})",
-            file=sys.stderr,
+        logger.info(
+            "wrote %s (entities=%d evidence=%d)",
+            out_path,
+            len(emitted),
+            evidence_count,
         )
 
     return 0
