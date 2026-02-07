@@ -1,70 +1,49 @@
-import pytest
+import json
 from unittest.mock import MagicMock, patch
-from pathlib import Path
+
 from click.testing import CliRunner
+
 from extractor.cli import cli
 
-@patch("extractor.cli.FacialEngine")
-@patch("extractor.cli.EnrichmentEngine")
+
 @patch("extractor.cli.DoclingEngine")
 @patch("extractor.cli.Scanner")
-def test_extract_command_invokes_enrichment(MockScanner, MockDoclingEngine, MockEnrichmentEngine, MockFacialEngine, tmp_path):
-    # Setup
+def test_process_writes_raw_image_metadata(MockScanner, MockDoclingEngine, tmp_path):
     source_dir = tmp_path / "source"
     source_dir.mkdir()
-    (source_dir / "test.pdf").touch()
+    pdf_path = source_dir / "test.pdf"
+    pdf_path.touch()
+
     target_dir = tmp_path / "target"
-    
-    # Mock Scanner
+
     mock_scanner = MockScanner.return_value
-    mock_scanner.scan.return_value = [source_dir / "test.pdf"]
-    
-    # Mock DoclingEngine
+    mock_scanner.scan.return_value = [pdf_path]
+
     mock_docling = MockDoclingEngine.return_value
     mock_docling.convert.return_value = MagicMock()
-    
-    # Ensure directory exists for metadata writing
-    images_dir = target_dir / "test" / "images"
-    images_dir.mkdir(parents=True)
-    
-    # Return one image in metadata
-    image_metadata = [{
-        "filename": "img1.png",
-        "path": str(images_dir / "img1.png")
-    }]
-    mock_docling.save_images.return_value = image_metadata
-    
-    # Mock EnrichmentEngine
-    mock_enrichment = MockEnrichmentEngine.return_value
-    mock_enrichment.describe_image.return_value = "A description"
-    mock_enrichment.embed_image.return_value = {"dino": [0.1], "clip": [0.2]}
 
-    mock_facial = MockFacialEngine.return_value
-    mock_facial.enabled = True
-    mock_facial.detect_faces.return_value = [{"bbox": [1, 2, 3, 4], "embedding": [0.5, 0.6]}]
-    
+    images_dir = target_dir / "test" / "images"
+    image_metadata = [
+        {
+            "filename": "img1.png",
+            "page_no": 1,
+            "bbox": [0, 0, 10, 10],
+            "path": str(images_dir / "img1.png"),
+        }
+    ]
+    mock_docling.save_images.return_value = image_metadata
+
     runner = CliRunner()
-    result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
-    
+    result = runner.invoke(cli, ["process", "--source", str(source_dir), "--target", str(target_dir)])
+
     assert result.exit_code == 0
-    
-    # Verify EnrichmentEngine was initialized and called
-    MockEnrichmentEngine.assert_called_once()
-    mock_enrichment.describe_image.assert_called()
-    mock_enrichment.embed_image.assert_called()
-    
-    # Verify arguments
-    args, _ = mock_enrichment.describe_image.call_args
-    assert str(args[0]) == str(target_dir / "test" / "images" / "img1.png")
-    
-    # Verify metadata file created
-    import json
-    metadata_file = target_dir / "test" / "images" / "image_metadata.json"
-    assert metadata_file.exists()
-    with open(metadata_file) as f:
-        data = json.load(f)
+
+    meta_path = target_dir / "test" / "images" / "image_metadata.json"
+    assert meta_path.exists()
+
+    data = json.loads(meta_path.read_text(encoding="utf-8"))
     assert len(data) == 1
-    assert data[0]["description"] == "A description"
-    assert data[0]["embeddings"]["dino"] == [0.1]
-    assert data[0]["faces"][0]["bbox"] == [1, 2, 3, 4]
-    assert data[0]["faces"][0]["embedding"] == [0.5, 0.6]
+    assert data[0]["filename"] == "img1.png"
+    assert "description" not in data[0]
+    assert "embeddings" not in data[0]
+    assert "faces" not in data[0]

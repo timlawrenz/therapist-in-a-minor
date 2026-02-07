@@ -6,7 +6,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
 
 import ollama
 from followthemoney import model
@@ -52,7 +52,11 @@ def _first_prop(entity: Dict[str, Any], prop: str) -> Optional[str]:
     return None
 
 
-def iter_factual_evidence(factual_ndjson: Path, max_chars: int = 8000) -> Iterator[Evidence]:
+def iter_factual_evidence(
+    factual_ndjson: Path,
+    max_chars: int = 8000,
+    image_description: Optional[Callable[[Dict[str, Any]], Optional[str]]] = None,
+) -> Iterator[Evidence]:
     factual_ndjson = Path(factual_ndjson)
     with factual_ndjson.open("r", encoding="utf-8") as fh:
         for line in fh:
@@ -70,6 +74,11 @@ def iter_factual_evidence(factual_ndjson: Path, max_chars: int = 8000) -> Iterat
 
             if schema == "Image":
                 desc = _first_prop(ent, "description")
+                if not desc and image_description is not None:
+                    try:
+                        desc = image_description(ent)
+                    except Exception:
+                        desc = None
                 if not desc:
                     continue
                 yield Evidence(proof_id=str(ent_id), kind="Image", text=desc[:max_chars])
@@ -256,6 +265,7 @@ def infer_stream(
     model_name: Optional[str] = None,
     max_chars: int = 8000,
     verbose: bool = False,
+    image_enrichment: bool = True,
 ) -> int:
     cfg = load_config()
     enrichment = cfg.get("enrichment", {})
@@ -272,6 +282,102 @@ def infer_stream(
 
     client = ollama.Client(host=ollama_host)
 
+    image_description_cb: Optional[Callable[[Dict[str, Any]], Optional[str]]] = None
+    if image_enrichment:
+        from datetime import datetime
+        from urllib.parse import urlparse, unquote
+
+        from .enrichment_engine import EnrichmentEngine
+        from .facial_engine import FacialEngine
+
+        enrichment_engine = EnrichmentEngine(cfg)
+        facial_engine = FacialEngine(cfg)
+
+        cache: Dict[Path, Dict[str, Any]] = {}
+
+        def _path_from_source_url(url: str) -> Optional[Path]:
+            try:
+                if not url.startswith("file:"):
+                    return None
+                parsed = urlparse(url)
+                return Path(unquote(parsed.path))
+            except Exception:
+                return None
+
+        def _load_enrichment(images_dir: Path) -> List[Dict[str, Any]]:
+            enrich_path = images_dir / "image_enrichment.json"
+            if images_dir in cache:
+                return cache[images_dir]["data"]
+            data: List[Dict[str, Any]] = []
+            if enrich_path.exists():
+                try:
+                    data = json.loads(enrich_path.read_text(encoding="utf-8"))
+                except Exception:
+                    data = []
+            cache[images_dir] = {"data": data, "path": enrich_path}
+            return data
+
+        def _save_enrichment(images_dir: Path) -> None:
+            entry = cache.get(images_dir)
+            if not entry:
+                return
+            enrich_path = entry["path"]
+            enrich_path.write_text(json.dumps(entry["data"], ensure_ascii=False, indent=2), encoding="utf-8")
+
+        def image_description(ent: Dict[str, Any]) -> Optional[str]:
+            img_id = str(ent.get("id") or "")
+            src_url = _first_prop(ent, "sourceUrl")
+            file_name = _first_prop(ent, "fileName")
+
+            img_path = None
+            if isinstance(src_url, str):
+                img_path = _path_from_source_url(src_url)
+            if img_path is None and isinstance(file_name, str) and file_name:
+                # best-effort fallback: can't resolve without sourceUrl
+                return None
+            if img_path is None:
+                return None
+
+            images_dir = img_path.parent
+            data = _load_enrichment(images_dir)
+
+            for item in data:
+                if not isinstance(item, dict):
+                    continue
+                if img_id and item.get("id") == img_id and item.get("description"):
+                    return str(item.get("description"))
+                if file_name and item.get("filename") == file_name and item.get("description"):
+                    return str(item.get("description"))
+
+            if verbose:
+                logger.info("enriching image=%s", img_path)
+
+            desc = enrichment_engine.describe_image(img_path)
+            embeddings = enrichment_engine.embed_image(img_path)
+            faces = facial_engine.detect_faces(img_path) if facial_engine.enabled else []
+
+            rec: Dict[str, Any] = {
+                "id": img_id or None,
+                "filename": file_name or img_path.name,
+                "path": str(img_path),
+                "sourceUrl": src_url,
+                "generatedAt": datetime.now().isoformat(),
+                "ollamaHost": enrichment_engine.ollama_host,
+                "descriptionModel": enrichment_engine.description_model,
+                "embeddingModelDino": enrichment_engine.embedding_model_dino_id,
+                "embeddingModelClip": enrichment_engine.embedding_model_clip_id,
+                "description": desc,
+                "embeddings": embeddings,
+            }
+            if faces:
+                rec["faces"] = faces
+
+            data.append(rec)
+            _save_enrichment(images_dir)
+            return desc
+
+        image_description_cb = image_description
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -285,7 +391,9 @@ def infer_stream(
 
     # Create output file immediately and stream-write results as they are generated.
     with out_path.open("w", encoding="utf-8", buffering=1) as out:
-        for evidence in iter_factual_evidence(factual_ndjson, max_chars=max_chars):
+        for evidence in iter_factual_evidence(
+            factual_ndjson, max_chars=max_chars, image_description=image_description_cb
+        ):
             evidence_count += 1
 
             raw_items = _infer_raw(client, model_name, evidence, verbose=verbose)

@@ -1,88 +1,76 @@
-import pytest
-from unittest.mock import MagicMock, patch
-from click.testing import CliRunner
-from extractor.cli import cli
 import json
-import torch
 
-@patch("extractor.cli.FacialEngine")
-@patch("extractor.enrichment_engine.Image")
-@patch("extractor.enrichment_engine.BitImageProcessor")
-@patch("extractor.enrichment_engine.Dinov2Model")
-@patch("extractor.enrichment_engine.CLIPProcessor")
-@patch("extractor.enrichment_engine.CLIPModel")
-@patch("ollama.Client")
-@patch("extractor.cli.DoclingEngine") # Still mock docling as it's heavy/slow
-@patch("extractor.cli.Scanner")
-def test_full_pipeline_enrichment(MockScanner, MockDocling, MockOllamaClient, 
-                                  MockCLIPModel, MockCLIPProcessor, 
-                                  MockDinoModel, MockDinoProcessor, MockImage, MockFacialEngine, tmp_path):
-    # Setup
-    source_dir = tmp_path / "source"
-    source_dir.mkdir()
-    (source_dir / "test.pdf").touch()
-    target_dir = tmp_path / "target"
-    
-    # Mock Image.open
-    mock_image = MockImage.open.return_value
-    mock_image.convert.return_value = mock_image
-    
-    # Mock Scanner
-    mock_scanner = MockScanner.return_value
-    mock_scanner.scan.return_value = [source_dir / "test.pdf"]
-    
-    # Mock DoclingEngine to simulate image extraction
-    mock_docling_instance = MockDocling.return_value
-    images_dir = target_dir / "test" / "images"
-    images_dir.mkdir(parents=True)
+import extractor.inference as inf
+
+
+class DummyClient:
+    def __init__(self, host=None):
+        self.host = host
+
+    def generate(self, model, prompt):
+        return {"response": "[]"}
+
+
+def test_infer_stream_enriches_images_when_missing_description(tmp_path, monkeypatch):
+    images_dir = tmp_path / "images"
+    images_dir.mkdir()
     img_path = images_dir / "img1.png"
     img_path.write_bytes(b"fake_image_data")
-    
-    mock_docling_instance.convert.return_value = MagicMock()
-    mock_docling_instance.save_images.return_value = [{
-        "filename": "img1.png",
-        "path": str(img_path)
-    }]
-    
-    # Mock Ollama
-    mock_ollama = MockOllamaClient.return_value
-    mock_ollama.generate.return_value = {"response": "Mock Description"}
-    
-    # Mock faces
-    mock_facial = MockFacialEngine.return_value
-    mock_facial.enabled = True
-    mock_facial.detect_faces.return_value = [{"bbox": [10, 20, 30, 40], "embedding": [0.9]}]
-    # We mock the instance returned by from_pretrained
-    mock_dino_model = MockDinoModel.from_pretrained.return_value
-    mock_dino_output = MagicMock()
-    # DINOv2 output shape is [batch, seq_len, hidden_size]
-    # We mocked mean pooling over dim=1
-    mock_dino_output.last_hidden_state = torch.tensor([[[0.1]]])
-    mock_dino_model.return_value = mock_dino_output
-    
-    mock_clip_model = MockCLIPModel.from_pretrained.return_value
-    # CLIP output shape is [batch, hidden_size]
-    mock_clip_model.get_image_features.return_value = torch.tensor([[0.2]])
-    
-    # Run CLI
-    runner = CliRunner()
-    result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
-    
-    if result.exit_code != 0:
-        print(result.output)
-        print(result.exception)
-    
-    assert result.exit_code == 0
-    
-    # Verify metadata file
-    metadata_file = images_dir / "image_metadata.json"
-    assert metadata_file.exists()
-    
-    with open(metadata_file) as f:
-        data = json.load(f)
-    
+
+    factual = tmp_path / "followthemoney.ndjson"
+    out = tmp_path / "followthemoney.inferred.ndjson"
+
+    img_id = "img-1"
+    factual.write_text(
+        json.dumps(
+            {
+                "id": img_id,
+                "schema": "Image",
+                "properties": {
+                    "fileName": ["img1.png"],
+                    "sourceUrl": [img_path.as_uri()],
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        inf,
+        "load_config",
+        lambda *a, **k: {"enrichment": {"ollama_host": "http://x", "description_model": "m"}},
+    )
+    monkeypatch.setattr(inf.ollama, "Client", DummyClient)
+
+    from unittest.mock import patch
+
+    with patch("extractor.enrichment_engine.EnrichmentEngine") as MockEnrich, patch(
+        "extractor.facial_engine.FacialEngine"
+    ) as MockFacial:
+        enrich = MockEnrich.return_value
+        enrich.describe_image.return_value = "Mock Description"
+        enrich.embed_image.return_value = {"dino": [0.1], "clip": [0.2]}
+        enrich.ollama_host = "http://x"
+        enrich.description_model = "m"
+        enrich.embedding_model_dino_id = "d"
+        enrich.embedding_model_clip_id = "c"
+
+        facial = MockFacial.return_value
+        facial.enabled = True
+        facial.detect_faces.return_value = [{"bbox": [1, 2, 3, 4], "embedding": [0.9]}]
+
+        rc = inf.infer_stream(factual_ndjson=factual, out_path=out)
+        assert rc == 0
+
+    enrich_path = images_dir / "image_enrichment.json"
+    assert enrich_path.exists()
+
+    data = json.loads(enrich_path.read_text(encoding="utf-8"))
+    assert len(data) == 1
+    assert data[0]["id"] == img_id
     assert data[0]["description"] == "Mock Description"
-    assert data[0]["embeddings"]["dino"] == pytest.approx([0.1])
-    assert data[0]["embeddings"]["clip"] == pytest.approx([0.2])
-    assert data[0]["faces"][0]["bbox"] == [10, 20, 30, 40]
-    assert data[0]["faces"][0]["embedding"] == pytest.approx([0.9])
+    assert data[0]["embeddings"]["dino"] == [0.1]
+    assert data[0]["embeddings"]["clip"] == [0.2]
+    assert data[0]["faces"][0]["bbox"] == [1, 2, 3, 4]
+    assert data[0]["faces"][0]["embedding"] == [0.9]

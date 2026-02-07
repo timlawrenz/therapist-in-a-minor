@@ -44,6 +44,11 @@ def main() -> int:
         action="store_true",
         help="Print progress and errors to stderr",
     )
+    parser.add_argument(
+        "--no-image-enrichment",
+        action="store_true",
+        help="Do not generate images/image_enrichment.json (skip image descriptions/embeddings/faces)",
+    )
 
     args = parser.parse_args()
 
@@ -63,6 +68,7 @@ def main() -> int:
         model_name=args.model,
         max_chars=args.max_chars,
         verbose=args.verbose,
+        image_enrichment=not args.no_image_enrichment,
     )
 
 

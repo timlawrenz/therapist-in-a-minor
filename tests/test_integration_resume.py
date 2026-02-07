@@ -5,10 +5,9 @@ from click.testing import CliRunner
 from extractor.cli import cli
 import json
 
-@patch("extractor.cli.EnrichmentEngine")
 @patch("extractor.cli.DoclingEngine")
 @patch("extractor.cli.Scanner")
-def test_full_pipeline_resume(MockScanner, MockDocling, MockEnrichment, tmp_path):
+def test_full_pipeline_resume(MockScanner, MockDocling, tmp_path):
     source_dir = tmp_path / "source"
     source_dir.mkdir()
     (source_dir / "doc1.pdf").touch()
@@ -21,12 +20,6 @@ def test_full_pipeline_resume(MockScanner, MockDocling, MockEnrichment, tmp_path
     # Mock Docling
     mock_docling_instance = MockDocling.return_value
     mock_docling_instance.convert.return_value = MagicMock()
-    
-    # Mock Enrichment
-    mock_enrichment_instance = MockEnrichment.return_value
-    mock_enrichment_instance.describe_image.return_value = "desc"
-    mock_enrichment_instance.embed_image.return_value = {"dino": [0.1]}
-    mock_enrichment_instance.extract_faces.return_value = []
     
     # First run: should extract
     # We need to simulate save_images creating files so next run sees them
@@ -57,14 +50,14 @@ def test_full_pipeline_resume(MockScanner, MockDocling, MockEnrichment, tmp_path
     runner = CliRunner()
     
     # Run 1
-    result1 = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
+    result1 = runner.invoke(cli, ['process', '--source', str(source_dir), '--target', str(target_dir)])
     
     if result1.exit_code != 0:
         print(result1.output)
         print(result1.exception)
         
     assert result1.exit_code == 0
-    assert "Successfully extracted:   1" in result1.output
+    assert "Successfully processed:   1" in result1.output
     
     # Verify files created
     doc_dir = target_dir / "doc1"
@@ -81,7 +74,7 @@ def test_full_pipeline_resume(MockScanner, MockDocling, MockEnrichment, tmp_path
     assert m["images"][0]["filename"] == "img1.png"
     
     # Run 2
-    result2 = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
+    result2 = runner.invoke(cli, ['process', '--source', str(source_dir), '--target', str(target_dir)])
     
     if result2.exit_code != 0:
         print(result2.output)
@@ -89,4 +82,4 @@ def test_full_pipeline_resume(MockScanner, MockDocling, MockEnrichment, tmp_path
     assert result2.exit_code == 0
     # assert "Skipping already processed" in result2.output # Logging might not be captured by CliRunner
     assert "Skipped (already exists): 1" in result2.output
-    assert "Successfully extracted:   0" in result2.output
+    assert "Successfully processed:   0" in result2.output

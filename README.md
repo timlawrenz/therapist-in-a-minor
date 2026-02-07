@@ -24,24 +24,12 @@ This project aims to create a high-fidelity, machine-readable derivative of the 
 
 ## Usage
 
-The tool offers three commands: `discover`, `extract`, and `process` (recommended).
+The extractor CLI offers a single command: `process`.
 
-### 1. Discovery
-Recursively scans a source directory for documents (PDFs) and creates a structured scaffolding in the target directory.
+### 1. Process
+Scans the source tree, creates a per-file scaffold in the target (folder + symlink + `manifest.json`), and for PDFs runs **Docling** to extract markdown/json and images.
 
-```bash
-python -m extractor.cli discover --source /path/to/source --target /path/to/target
-```
-
-### 2. Extraction
-Extracts text, layouts, and images from the documents using **Docling**. It also performs AI enrichment on extracted images (descriptions, embeddings, and faces).
-
-```bash
-python -m extractor.cli extract --source /path/to/source --target /path/to/target
-```
-
-### 3. Process (recommended)
-Runs discovery + extraction in a single step.
+Note: `process` performs **raw extraction only** (no AI enrichment).
 
 ```bash
 python -m extractor.cli process --source /path/to/source --target /path/to/target
@@ -76,6 +64,9 @@ python scripts/infer_followthemoney.py --target /path/to/target
 # show progress:
 python scripts/infer_followthemoney.py --target /path/to/target --verbose
 
+# disable inference-time image enrichment (no image descriptions/embeddings/faces):
+python scripts/infer_followthemoney.py --target /path/to/target --no-image-enrichment
+
 # override inputs/outputs:
 python scripts/infer_followthemoney.py --target /path/to/target --factual /path/to/followthemoney.ndjson --out /path/to/inferred.ndjson
 ```
@@ -104,11 +95,11 @@ The deduplicator currently uses exact-match canonicalization (case/whitespace no
 -   `--source <path>`: (Required) Path to the source directory containing the DOJ files.
 -   `--target <path>`: (Required) Path where the processed dataset will be created.
 -   `--force`: Force overwrite of existing processed documents.
--   `--verbose`: Enable verbose logging (DEBUG level). This is a global option and must be passed before the command, e.g. `python -m extractor.cli --verbose extract ...`.
+-   `--verbose`: Enable verbose logging (DEBUG level). This is a global option and must be passed before the command, e.g. `python -m extractor.cli --verbose process ...`.
 
 ## Configuration
 
-Configuration is managed via `config.yaml` in the project root. You can customize the models used for extraction and enrichment.
+Configuration is managed via `config.yaml` in the project root. You can customize the models used for Docling extraction and inference-time enrichment.
 
 ```yaml
 docling:
@@ -136,13 +127,10 @@ For every processed PDF document, the following artifacts are generated in its t
 ### 2. Extracted Images
 All figures, photos, and charts detected in the PDF are saved as individual PNG files in the `images/` subdirectory.
 
-### 3. Image Enrichment Metadata
-A sidecar JSON file (`images/image_metadata.json`) containing AI-derived analysis for every extracted image:
+### 3. Image Extraction Metadata (raw)
+A sidecar JSON file (`images/image_metadata.json`) containing **raw** extraction metadata for each extracted image (e.g. filename, page number, bounding box).
 
--   **`description`:** A detailed natural language description of the image content (generated via Ollama/VLM).
--   **`embeddings`:** High-dimensional vector representations for semantic search:
-    -   **DINOv2:** Self-supervised vision features (e.g., from `facebook/dinov2-base`).
-    -   **CLIP:** Semantic text-image features (e.g., from `openai/clip-vit-base-patch32`).
+Inference-time AI outputs are persisted separately to `images/image_enrichment.json` (descriptions, embeddings, faces) when running `scripts/infer_followthemoney.py`.
 
 ### 4. Lineage Manifest (`manifest.json`)
 The central record for the document, linking all assets:
@@ -161,5 +149,6 @@ target/
     ├── manifest.json
     └── images/
         ├── page_1_img_1.png
-        └── image_metadata.json
+        ├── image_metadata.json
+        └── image_enrichment.json  # created by inference (optional)
 ```

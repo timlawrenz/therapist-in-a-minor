@@ -1,124 +1,115 @@
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+import json
+from unittest.mock import MagicMock, patch
+
 from click.testing import CliRunner
+
 from extractor.cli import cli
+
 
 def test_cli_missing_arguments():
     runner = CliRunner()
-    result = runner.invoke(cli, ['discover'])
+    result = runner.invoke(cli, ["process"])
     assert result.exit_code != 0
-    assert "Missing option '--source'" in result.output or "Missing option '--target'" in result.output
+    assert "Missing option '--source'" in result.output
+
 
 def test_cli_help():
     runner = CliRunner()
-    result = runner.invoke(cli, ['--help'])
+    result = runner.invoke(cli, ["--help"])
     assert result.exit_code == 0
     assert "Usage:" in result.output
+    assert "process" in result.output
 
-def test_cli_discover_arguments(tmp_path):
+
+def test_cli_process_empty_dir(tmp_path):
     source_dir = tmp_path / "source"
     source_dir.mkdir()
     target_dir = tmp_path / "target"
     target_dir.mkdir()
-    
+
     runner = CliRunner()
-    result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir)])
+    result = runner.invoke(
+        cli, ["process", "--source", str(source_dir), "--target", str(target_dir)]
+    )
+
     assert result.exit_code == 0
-    assert f"Discovering from {source_dir} to {target_dir}" in result.output
-
-def test_cli_nonexistent_source(tmp_path):
-    runner = CliRunner()
-    result = runner.invoke(cli, ['discover', '--source', 'nonexistent_path', '--target', str(tmp_path)])
-    assert result.exit_code != 0
-    assert "does not exist" in result.output
-
-def test_cli_source_is_file(tmp_path):
-    test_file = tmp_path / "file.txt"
-    test_file.touch()
-    runner = CliRunner()
-    result = runner.invoke(cli, ['discover', '--source', str(test_file), '--target', str(tmp_path)])
-    assert result.exit_code != 0
-    assert "is a file" in result.output
-
-def test_cli_error_during_processing(tmp_path):
-    source_dir = tmp_path / "source"
-    source_dir.mkdir()
-    (source_dir / "test.pdf").touch()
-    target_dir = tmp_path / "target"
-    target_dir.mkdir()
-    
-    with patch("extractor.scaffolding.Scaffolder.create_scaffold") as mock_scaffold:
-        mock_scaffold.side_effect = Exception("Disk full")
-        runner = CliRunner()
-        result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir)])
-        
-        assert result.exit_code == 0
-        assert "Error processing" in result.output
-        assert "Disk full" in result.output
-        assert "Errors encountered:       1" in result.output
-
-def test_cli_skips_existing_manifest(tmp_path):
-    source_dir = tmp_path / "source"
-    source_dir.mkdir()
-    (source_dir / "test.pdf").touch()
-    
-    target_dir = tmp_path / "target"
-    target_dir.mkdir()
-    
-    # Pre-create target manifest
-    doc_target = target_dir / "test"
-    doc_target.mkdir()
-    (doc_target / "manifest.json").touch()
-    
-    runner = CliRunner()
-    result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir)])
-    
-    assert result.exit_code == 0
-    assert "Skipped (already exists): 1" in result.output
     assert "Successfully processed:   0" in result.output
 
-def test_cli_force_overwrites_existing_manifest(tmp_path):
-    source_dir = tmp_path / "source"
-    source_dir.mkdir()
-    (source_dir / "test.pdf").touch()
-    
-    target_dir = tmp_path / "target"
-    target_dir.mkdir()
-    
-    # Pre-create target manifest
-    doc_target = target_dir / "test"
-    doc_target.mkdir()
-    (doc_target / "manifest.json").write_text("old")
-    
-    runner = CliRunner()
-    # Run with --force
-    result = runner.invoke(cli, ['discover', '--source', str(source_dir), '--target', str(target_dir), '--force'])
-    
-    assert result.exit_code == 0
-    assert "Successfully processed:   1" in result.output
-    assert "Skipped (already exists): 0" in result.output
-    # Verify it was overwritten (manifest.json should now be JSON from write_manifest, not "old")
-    assert (doc_target / "manifest.json").read_text() != "old"
 
-def test_cli_extract_command(tmp_path):
+def test_cli_process_skips_complete_pdf(tmp_path):
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    (source_dir / "doc1.pdf").touch()
+
+    target_dir = tmp_path / "target"
+    doc_dir = target_dir / "doc1"
+    doc_dir.mkdir(parents=True)
+    (doc_dir / "manifest.json").write_text(json.dumps({"images": []}))
+    (doc_dir / "doc1.md").touch()
+    (doc_dir / "doc1.json").touch()
+
+    with patch("extractor.cli.DoclingEngine") as MockEngine:
+        mock_docling = MockEngine.return_value
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["process", "--source", str(source_dir), "--target", str(target_dir)]
+        )
+
+    assert result.exit_code == 0
+    mock_docling.convert.assert_not_called()
+    assert "Skipped (already exists): 1" in result.output
+
+
+def test_cli_process_force_reprocesses(tmp_path):
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    pdf_path = source_dir / "doc1.pdf"
+    pdf_path.touch()
+
+    target_dir = tmp_path / "target"
+    doc_dir = target_dir / "doc1"
+    doc_dir.mkdir(parents=True)
+    (doc_dir / "manifest.json").write_text(json.dumps({"images": []}))
+    (doc_dir / "doc1.md").touch()
+    (doc_dir / "doc1.json").touch()
+
+    with patch("extractor.cli.DoclingEngine") as MockEngine:
+        mock_docling = MockEngine.return_value
+        mock_docling.convert.return_value = MagicMock()
+        mock_docling.save_images.return_value = []
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "process",
+                "--source",
+                str(source_dir),
+                "--target",
+                str(target_dir),
+                "--force",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_docling.convert.assert_called_once()
+
+
+def test_cli_process_error_counts(tmp_path):
     source_dir = tmp_path / "source"
     source_dir.mkdir()
     (source_dir / "test.pdf").touch()
-    
+
     target_dir = tmp_path / "target"
     target_dir.mkdir()
-    
-    # Mock DoclingEngine to avoid actual heavy processing
-    with patch("extractor.cli.DoclingEngine") as MockEngine:
-        mock_instance = MockEngine.return_value
-        mock_result = MagicMock()
-        mock_instance.convert.return_value = mock_result
-        mock_instance.save_images.return_value = [] # Mock metadata
-        
+
+    with patch("extractor.scaffolding.Scaffolder.write_manifest") as mock_manifest:
+        mock_manifest.side_effect = Exception("Disk full")
         runner = CliRunner()
-        result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
-        
-        assert result.exit_code == 0
-        assert "Extraction complete" in result.output
-        mock_instance.convert.assert_called()
+        result = runner.invoke(
+            cli, ["process", "--source", str(source_dir), "--target", str(target_dir)]
+        )
+
+    assert result.exit_code == 0
+    assert "Disk full" in result.output
+    assert "Errors encountered:       1" in result.output

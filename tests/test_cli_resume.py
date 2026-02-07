@@ -5,10 +5,9 @@ from pathlib import Path
 from click.testing import CliRunner
 from extractor.cli import cli
 
-@patch("extractor.cli.EnrichmentEngine")
 @patch("extractor.cli.DoclingEngine")
 @patch("extractor.cli.Scanner")
-def test_extract_command_skips_processed(MockScanner, MockDoclingEngine, MockEnrichmentEngine, tmp_path):
+def test_process_command_skips_processed(MockScanner, MockDoclingEngine, tmp_path):
     source_dir = tmp_path / "source"
     source_dir.mkdir()
     (source_dir / "doc1.pdf").touch()
@@ -30,7 +29,7 @@ def test_extract_command_skips_processed(MockScanner, MockDoclingEngine, MockEnr
     mock_docling = MockDoclingEngine.return_value
     
     runner = CliRunner()
-    result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir)])
+    result = runner.invoke(cli, ['process', '--source', str(source_dir), '--target', str(target_dir)])
     
     assert result.exit_code == 0
     # Should NOT have called convert
@@ -40,10 +39,9 @@ def test_extract_command_skips_processed(MockScanner, MockDoclingEngine, MockEnr
     # Current CLI uses logger.debug for skips in discover. 
     # We should check logs.
     
-@patch("extractor.cli.EnrichmentEngine")
 @patch("extractor.cli.DoclingEngine")
 @patch("extractor.cli.Scanner")
-def test_extract_command_force_reprocesses(MockScanner, MockDoclingEngine, MockEnrichmentEngine, tmp_path):
+def test_process_command_force_reprocesses(MockScanner, MockDoclingEngine, tmp_path):
     source_dir = tmp_path / "source"
     source_dir.mkdir()
     (source_dir / "doc1.pdf").touch()
@@ -66,7 +64,7 @@ def test_extract_command_force_reprocesses(MockScanner, MockDoclingEngine, MockE
     
     runner = CliRunner()
     # Pass --force
-    result = runner.invoke(cli, ['extract', '--source', str(source_dir), '--target', str(target_dir), '--force'])
+    result = runner.invoke(cli, ['process', '--source', str(source_dir), '--target', str(target_dir), '--force'])
     
     assert result.exit_code == 0
     # Should HAVE called convert
