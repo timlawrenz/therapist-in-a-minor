@@ -268,178 +268,175 @@ def infer_stream(
         logger.error("missing factual NDJSON: %s", factual_ndjson)
         return 2
 
-    emitted: Dict[str, Any] = {}
     evidence_count = 0
+    entity_count = 0
 
-    for evidence in iter_factual_evidence(factual_ndjson, max_chars=max_chars):
-        evidence_count += 1
-        if verbose and evidence_count % 25 == 0:
-            logger.info("processed evidence=%d entities=%d", evidence_count, len(emitted))
+    # Create output file immediately and stream-write results as they are generated.
+    with out_path.open("w", encoding="utf-8", buffering=1) as out:
+        for evidence in iter_factual_evidence(factual_ndjson, max_chars=max_chars):
+            evidence_count += 1
 
-        raw_items = _infer_raw(client, model_name, evidence, verbose=verbose)
-        if verbose and evidence_count <= 3:
-            logger.info("received %d inferred items for proof=%s", len(raw_items), evidence.proof_id)
+            raw_items = _infer_raw(client, model_name, evidence, verbose=verbose)
+            if verbose and evidence_count <= 3:
+                logger.info("received %d inferred items for proof=%s", len(raw_items), evidence.proof_id)
 
-        # per-proof local caches to allow Event linking by name
-        persons: Dict[str, str] = {}
-        addresses: Dict[str, str] = {}
+            local: Dict[str, Any] = {}
 
-        def ensure_person(name: str) -> str:
-            key = name.strip()
-            ent_id = persons.get(key)
-            if ent_id:
-                return ent_id
+            # per-proof local caches to allow Event linking by name
+            persons: Dict[str, str] = {}
+            addresses: Dict[str, str] = {}
 
-            props: Dict[str, Any] = {"name": key}
-            _normalize_person(props)
-            ent_id = _stable_mention_id(evidence.proof_id, "Person", props.get("name") or key)
+            def ensure_person(name: str) -> str:
+                key = name.strip()
+                ent_id = persons.get(key)
+                if ent_id:
+                    return ent_id
 
-            if ent_id in emitted:
+                props: Dict[str, Any] = {"name": key}
+                _normalize_person(props)
+                ent_id = _stable_mention_id(evidence.proof_id, "Person", props.get("name") or key)
+
+                if ent_id not in local:
+                    ent = model.make_entity("Person")
+                    ent.id = ent_id
+                    _add_props_safe(ent, props)
+                    _add_one_safe(ent, "proof", evidence.proof_id)
+                    _add_inference_meta(
+                        ent,
+                        {
+                            "stream": "inferred",
+                            "source": "ollama",
+                            "confidence": None,
+                            "evidence": None,
+                            "proof": evidence.proof_id,
+                        },
+                    )
+                    local[ent_id] = ent
+
                 persons[key] = ent_id
                 return ent_id
 
-            ent = model.make_entity("Person")
-            ent.id = ent_id
-            _add_props_safe(ent, props)
-            _add_one_safe(ent, "proof", evidence.proof_id)
-            _add_inference_meta(
-                ent,
-                {
-                    "stream": "inferred",
-                    "source": "ollama",
-                    "confidence": None,
-                    "evidence": None,
-                    "proof": evidence.proof_id,
-                },
-            )
+            def ensure_address(full: str) -> str:
+                key = full.strip()
+                ent_id = addresses.get(key)
+                if ent_id:
+                    return ent_id
 
-            emitted[ent_id] = ent
-            persons[key] = ent_id
-            return ent_id
+                props: Dict[str, Any] = {"full": key, "name": key}
+                _normalize_address(props)
+                ent_id = _stable_mention_id(evidence.proof_id, "Address", props.get("full") or key)
 
-        def ensure_address(full: str) -> str:
-            key = full.strip()
-            ent_id = addresses.get(key)
-            if ent_id:
-                return ent_id
+                if ent_id not in local:
+                    ent = model.make_entity("Address")
+                    ent.id = ent_id
+                    _add_props_safe(ent, props)
+                    _add_one_safe(ent, "proof", evidence.proof_id)
+                    _add_inference_meta(
+                        ent,
+                        {
+                            "stream": "inferred",
+                            "source": "ollama",
+                            "confidence": None,
+                            "evidence": None,
+                            "proof": evidence.proof_id,
+                        },
+                    )
+                    local[ent_id] = ent
 
-            props: Dict[str, Any] = {"full": key, "name": key}
-            _normalize_address(props)
-            ent_id = _stable_mention_id(evidence.proof_id, "Address", props.get("full") or key)
-
-            if ent_id in emitted:
                 addresses[key] = ent_id
                 return ent_id
 
-            ent = model.make_entity("Address")
-            ent.id = ent_id
-            _add_props_safe(ent, props)
-            _add_one_safe(ent, "proof", evidence.proof_id)
-            _add_inference_meta(
-                ent,
-                {
-                    "stream": "inferred",
-                    "source": "ollama",
-                    "confidence": None,
-                    "evidence": None,
-                    "proof": evidence.proof_id,
-                },
-            )
-
-            emitted[ent_id] = ent
-            addresses[key] = ent_id
-            return ent_id
-
-        for item in raw_items:
-            if not isinstance(item, dict):
-                continue
-            schema = item.get("schema")
-            if schema not in SCHEMA_WHITELIST:
-                continue
-
-            props = item.get("properties") or {}
-            if not isinstance(props, dict):
-                continue
-
-            confidence = item.get("confidence")
-            evidence_quote = item.get("evidence")
-
-            if schema == "Person":
-                _normalize_person(props)
-                key = str(props.get("name") or "").strip()
-                if not key:
+            for item in raw_items:
+                if not isinstance(item, dict):
                     continue
-                ent_id = _stable_mention_id(evidence.proof_id, schema, key)
-                ent = model.make_entity(schema)
-                ent.id = ent_id
-                _add_props_safe(ent, props)
-                _add_one_safe(ent, "proof", evidence.proof_id)
-
-            elif schema == "Address":
-                _normalize_address(props)
-                key = str(props.get("full") or props.get("name") or "").strip()
-                if not key:
+                schema = item.get("schema")
+                if schema not in SCHEMA_WHITELIST:
                     continue
-                ent_id = _stable_mention_id(evidence.proof_id, schema, key)
-                ent = model.make_entity(schema)
-                ent.id = ent_id
-                _add_props_safe(ent, props)
-                _add_one_safe(ent, "proof", evidence.proof_id)
 
-            elif schema == "Event":
-                key = str(props.get("name") or "").strip() or f"event@{evidence.proof_id}"
-                ent_id = _stable_mention_id(evidence.proof_id, schema, key)
-                ent = model.make_entity(schema)
-                ent.id = ent_id
+                props = item.get("properties") or {}
+                if not isinstance(props, dict):
+                    continue
 
-                # Link out involved/location if they are strings
-                involved = props.get("involved")
-                if isinstance(involved, list):
-                    inv_ids = [ensure_person(str(v)) for v in involved if isinstance(v, str) and v.strip()]
-                    props["involved"] = inv_ids
+                confidence = item.get("confidence")
+                evidence_quote = item.get("evidence")
 
-                loc = props.get("location")
-                if isinstance(loc, str) and loc.strip():
-                    addr_id = ensure_address(loc)
-                    props["addressEntity"] = [addr_id]
+                if schema == "Person":
+                    _normalize_person(props)
+                    key = str(props.get("name") or "").strip()
+                    if not key:
+                        continue
+                    ent_id = _stable_mention_id(evidence.proof_id, schema, key)
+                    ent = model.make_entity(schema)
+                    ent.id = ent_id
+                    _add_props_safe(ent, props)
+                    _add_one_safe(ent, "proof", evidence.proof_id)
 
-                _add_props_safe(ent, props)
-                _add_one_safe(ent, "proof", evidence.proof_id)
+                elif schema == "Address":
+                    _normalize_address(props)
+                    key = str(props.get("full") or props.get("name") or "").strip()
+                    if not key:
+                        continue
+                    ent_id = _stable_mention_id(evidence.proof_id, schema, key)
+                    ent = model.make_entity(schema)
+                    ent.id = ent_id
+                    _add_props_safe(ent, props)
+                    _add_one_safe(ent, "proof", evidence.proof_id)
 
-            else:
-                key = str(props.get("name") or props.get("id") or props.get("full") or "").strip()
-                if not key:
-                    key = f"{schema}@{evidence.proof_id}"
-                ent_id = _stable_mention_id(evidence.proof_id, schema, key)
-                ent = model.make_entity(schema)
-                ent.id = ent_id
-                _add_props_safe(ent, props)
-                _add_one_safe(ent, "proof", evidence.proof_id)
+                elif schema == "Event":
+                    key = str(props.get("name") or "").strip() or f"event@{evidence.proof_id}"
+                    ent_id = _stable_mention_id(evidence.proof_id, schema, key)
+                    ent = model.make_entity(schema)
+                    ent.id = ent_id
 
-            _add_inference_meta(
-                ent,
-                {
-                    "stream": "inferred",
-                    "source": "ollama",
-                    "confidence": confidence,
-                    "evidence": evidence_quote,
-                    "proof": evidence.proof_id,
-                    "kind": evidence.kind,
-                },
-            )
+                    # Link out involved/location if they are strings
+                    involved = props.get("involved")
+                    if isinstance(involved, list):
+                        inv_ids = [ensure_person(str(v)) for v in involved if isinstance(v, str) and v.strip()]
+                        props["involved"] = inv_ids
 
-            emitted[ent_id] = ent
+                    loc = props.get("location")
+                    if isinstance(loc, str) and loc.strip():
+                        addr_id = ensure_address(loc)
+                        props["addressEntity"] = [addr_id]
 
-    with out_path.open("w", encoding="utf-8") as out:
-        for ent in emitted.values():
-            out.write(json.dumps(ent.to_dict(), ensure_ascii=False) + "\n")
+                    _add_props_safe(ent, props)
+                    _add_one_safe(ent, "proof", evidence.proof_id)
+
+                else:
+                    key = str(props.get("name") or props.get("id") or props.get("full") or "").strip()
+                    if not key:
+                        key = f"{schema}@{evidence.proof_id}"
+                    ent_id = _stable_mention_id(evidence.proof_id, schema, key)
+                    ent = model.make_entity(schema)
+                    ent.id = ent_id
+                    _add_props_safe(ent, props)
+                    _add_one_safe(ent, "proof", evidence.proof_id)
+
+                _add_inference_meta(
+                    ent,
+                    {
+                        "stream": "inferred",
+                        "source": "ollama",
+                        "confidence": confidence,
+                        "evidence": evidence_quote,
+                        "proof": evidence.proof_id,
+                        "kind": evidence.kind,
+                    },
+                )
+
+                local[ent_id] = ent
+
+            # Write this evidence batch immediately.
+            for ent in sorted(local.values(), key=lambda e: (e.schema.name, e.id)):
+                out.write(json.dumps(ent.to_dict(), ensure_ascii=False) + "\n")
+                entity_count += 1
+
+            out.flush()
+
+            if verbose and evidence_count % 25 == 0:
+                logger.info("processed evidence=%d wrote_entities=%d", evidence_count, entity_count)
 
     if verbose:
-        logger.info(
-            "wrote %s (entities=%d evidence=%d)",
-            out_path,
-            len(emitted),
-            evidence_count,
-        )
+        logger.info("wrote %s (entities=%d evidence=%d)", out_path, entity_count, evidence_count)
 
     return 0

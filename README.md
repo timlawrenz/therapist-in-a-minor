@@ -80,7 +80,9 @@ python scripts/infer_followthemoney.py --target /path/to/target --verbose
 python scripts/infer_followthemoney.py --target /path/to/target --factual /path/to/followthemoney.ndjson --out /path/to/inferred.ndjson
 ```
 
-The inferred stream emits entities like `Person`, `Address`, and `Event` (and other whitelisted schemata). Each inferred entity includes:
+The inferred stream emits entities like `Person`, `Address`, and `Event` (and other whitelisted schemata). Output is written incrementally as each evidence item is processed (useful for large corpora).
+
+Each inferred entity includes:
 - `proof`: link back to the originating factual `Document` or `Image` id
 - inference metadata: JSON including `confidence` and a short `evidence` quote, stored in `notes` when available (otherwise `description`/`summary`)
 
