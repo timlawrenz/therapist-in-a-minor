@@ -47,7 +47,41 @@ Runs discovery + extraction in a single step.
 python -m extractor.cli process --source /path/to/source --target /path/to/target
 ```
 
-### Options
+### 4. Export to FollowTheMoney (Stream A: Factual)
+After extraction, export a FollowTheMoney entity stream (**NDJSON**) from a target folder:
+
+```bash
+python scripts/export_followthemoney.py --target /path/to/target
+# writes: /path/to/target/followthemoney.ndjson
+
+# or choose output path:
+python scripts/export_followthemoney.py --target /path/to/target --out /path/to/out.ndjson
+
+# optionally include embeddings (can be very large):
+python scripts/export_followthemoney.py --target /path/to/target --include-embeddings
+```
+
+The exporter emits:
+- one `Document` entity per document folder (`manifest.json`)
+- one `Image` entity per extracted image (`images/image_metadata.json`), linked to the Document via `Image.proof`
+
+### 5. Infer FollowTheMoney (Stream B: Inferred)
+Generate a probabilistic/inferred NDJSON stream by asking an LLM (Ollama) to interpret the factual stream.
+
+```bash
+python scripts/infer_followthemoney.py --target /path/to/target
+# reads:  /path/to/target/followthemoney.ndjson
+# writes: /path/to/target/followthemoney.inferred.ndjson
+
+# override inputs/outputs:
+python scripts/infer_followthemoney.py --target /path/to/target --factual /path/to/followthemoney.ndjson --out /path/to/inferred.ndjson
+```
+
+The inferred stream emits entities like `Person`, `Address`, and `Event` (and other whitelisted schemata). Each inferred entity includes:
+- `proof`: link back to the originating factual `Document` or `Image` id
+- inference metadata: JSON including `confidence` and a short `evidence` quote, stored in `notes` when available (otherwise `description`/`summary`)
+
+### Extractor CLI Options
 -   `--source <path>`: (Required) Path to the source directory containing the DOJ files.
 -   `--target <path>`: (Required) Path where the processed dataset will be created.
 -   `--force`: Force overwrite of existing processed documents.

@@ -9,3 +9,4 @@ torch
 pillow
 insightface
 onnxruntime
+followthemoney

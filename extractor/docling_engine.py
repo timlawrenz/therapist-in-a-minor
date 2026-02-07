@@ -10,7 +10,7 @@ from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.datamodel.layout_model_specs import DOCLING_LAYOUT_HERON_101, LayoutModelConfig
 from docling.document_converter import DocumentConverter, PdfFormatOption
-from extractor.utils import load_config
+from extractor.utils import load_config, get_file_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -208,19 +208,68 @@ class DoclingEngine:
         """
         import json
         from datetime import datetime
-        
+
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        manifest = {
-            "timestamp": datetime.now().isoformat(),
-            "page_count": len(result.pages) if hasattr(result, "pages") else 0,
-            "models": {
-                "ocr_model": self.config.get("docling", {}).get("ocr_model"),
-                "layout_model": self.config.get("docling", {}).get("layout_model"),
-            },
-            "images": image_metadata,
-        }
-        
+
+        existing = {}
+        if output_path.exists():
+            try:
+                with open(output_path, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+            except Exception:
+                existing = {}
+
+        manifest = dict(existing) if isinstance(existing, dict) else {}
+
+        src_path = manifest.get("source_path")
+        if not src_path:
+            try:
+                if hasattr(result, "input") and hasattr(result.input, "file") and result.input.file:
+                    src_path = str(Path(result.input.file).absolute())
+            except Exception:
+                src_path = None
+
+        if src_path:
+            manifest.setdefault("source_path", src_path)
+            src_file = Path(src_path)
+            if src_file.exists():
+                try:
+                    meta = get_file_metadata(src_file)
+                    for key in ("file_size", "hash", "creation_date"):
+                        if key in meta:
+                            manifest.setdefault(key, meta[key])
+                    manifest.setdefault("document_id", src_file.stem)
+                    manifest.setdefault("file_type", "PDF" if src_file.suffix.lower() == ".pdf" else "UNKNOWN")
+                except Exception:
+                    pass
+
+        history = manifest.get("processing_history")
+        if not isinstance(history, list):
+            history = []
+
+        now = datetime.now().isoformat()
+        extraction_entry = {"step": "extraction", "timestamp": now, "status": "success"}
+        for i in range(len(history) - 1, -1, -1):
+            if isinstance(history[i], dict) and history[i].get("step") == "extraction":
+                history[i] = extraction_entry
+                break
+        else:
+            history.append(extraction_entry)
+
+        manifest["processing_history"] = history
+
+        manifest.update(
+            {
+                "timestamp": now,
+                "page_count": len(result.pages) if hasattr(result, "pages") else 0,
+                "models": {
+                    "ocr_model": self.config.get("docling", {}).get("ocr_model"),
+                    "layout_model": self.config.get("docling", {}).get("layout_model"),
+                },
+                "images": image_metadata,
+            }
+        )
+
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(manifest, f, ensure_ascii=False, indent=2)

@@ -155,3 +155,39 @@ def test_docling_engine_manifest(tmp_path):
             
             assert data["page_count"] == 2
             assert data["images"] == image_metadata
+
+
+def test_docling_engine_manifest_preserves_discovery_metadata(tmp_path):
+    import json
+
+    engine = DoclingEngine()
+    mock_result = MagicMock()
+    mock_result.pages = []
+
+    src = tmp_path / "doc1.pdf"
+    src.write_bytes(b"%PDF-1.4\n")
+    mock_result.input = MagicMock(file=src)
+
+    discovery_manifest = {
+        "document_id": "doc1",
+        "source_path": str(src.absolute()),
+        "file_type": "PDF",
+        "file_size": 123,
+        "hash": "abc",
+        "creation_date": "2020-01-01T00:00:00",
+        "processing_history": [
+            {"step": "discovery", "timestamp": "2020-01-01T00:00:00", "status": "success"}
+        ],
+    }
+
+    output_path = tmp_path / "manifest.json"
+    output_path.write_text(json.dumps(discovery_manifest))
+
+    engine.generate_manifest(mock_result, output_path, [])
+
+    merged = json.loads(output_path.read_text())
+    assert merged["source_path"] == discovery_manifest["source_path"]
+    assert merged["hash"] == discovery_manifest["hash"]
+    assert merged["file_size"] == discovery_manifest["file_size"]
+    assert any(step.get("step") == "discovery" for step in merged.get("processing_history", []))
+    assert any(step.get("step") == "extraction" for step in merged.get("processing_history", []))
