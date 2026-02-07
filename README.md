@@ -35,7 +35,7 @@ Note: `process` performs **raw extraction only** (no AI enrichment).
 python -m extractor.cli process --source /path/to/source --target /path/to/target
 ```
 
-### 4. Export to FollowTheMoney (Stream A: Factual)
+### 2. Export to FollowTheMoney (Stream A: Factual)
 After extraction, export a FollowTheMoney entity stream (**NDJSON**) from a target folder:
 
 ```bash
@@ -53,8 +53,10 @@ The exporter emits:
 - one `Document` entity per document folder (`manifest.json`)
 - one `Image` entity per extracted image (`images/image_metadata.json`), linked to the Document via `Image.proof`
 
-### 5. Infer FollowTheMoney (Stream B: Inferred)
+### 3. Infer FollowTheMoney (Stream B: Inferred)
 Generate a probabilistic/inferred NDJSON stream by asking an LLM (Ollama) to interpret the factual stream.
+
+This is also where **image analysis** happens: unless you pass `--no-image-enrichment`, the script will generate per-image descriptions/embeddings/faces and persist them to `images/image_enrichment.json` for use as Image evidence.
 
 ```bash
 python scripts/infer_followthemoney.py --target /path/to/target
@@ -77,7 +79,7 @@ Each inferred entity includes:
 - `proof`: link back to the originating factual `Document` or `Image` id
 - inference metadata: JSON including `confidence` and a short `evidence` quote, stored in `notes` when available (otherwise `description`/`summary`)
 
-### 6. Deduplicate inferred entities (Stream C: Secondary)
+### 4. Deduplicate inferred entities (Stream C: Secondary)
 Stream B intentionally produces *mention-level* entities (often many duplicates like 5x `Company` named “EFTA”, each with a different `proof`). Stream C is a secondary pass that merges duplicates into canonical entities and aggregates all `proof` links.
 
 ```bash
