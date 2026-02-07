@@ -86,6 +86,20 @@ Each inferred entity includes:
 - `proof`: link back to the originating factual `Document` or `Image` id
 - inference metadata: JSON including `confidence` and a short `evidence` quote, stored in `notes` when available (otherwise `description`/`summary`)
 
+### 6. Deduplicate inferred entities (Stream C: Secondary)
+Stream B intentionally produces *mention-level* entities (often many duplicates like 5x `Company` named “EFTA”, each with a different `proof`). Stream C is a secondary pass that merges duplicates into canonical entities and aggregates all `proof` links.
+
+```bash
+python scripts/dedup_followthemoney.py --target /path/to/target
+# reads:  /path/to/target/followthemoney.inferred.ndjson
+# writes: /path/to/target/followthemoney.inferred.dedup.ndjson
+
+# show progress:
+python scripts/dedup_followthemoney.py --target /path/to/target --verbose
+```
+
+The deduplicator currently uses exact-match canonicalization (case/whitespace normalization) for common schemata like `Person`, `Company`, and `Address`, and rewrites entity references (e.g. `Event.involved`) to point at the canonical IDs.
+
 ### Extractor CLI Options
 -   `--source <path>`: (Required) Path to the source directory containing the DOJ files.
 -   `--target <path>`: (Required) Path where the processed dataset will be created.
