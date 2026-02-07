@@ -225,6 +225,18 @@ def _infer_raw(
             )
         return []
     raw = (resp or {}).get("response", "")
+
+    if verbose:
+        max_log = 20000
+        snippet = raw if len(raw) <= max_log else (raw[:max_log] + "\n... [truncated]")
+        logger.debug(
+            "ollama.generate response kind=%s proof=%s chars=%d\n%s",
+            evidence.kind,
+            evidence.proof_id,
+            len(raw),
+            snippet,
+        )
+
     json_text = _extract_json_array(raw)
     if not json_text:
         return []
