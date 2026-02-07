@@ -51,30 +51,31 @@ def _first_prop(entity: Dict[str, Any], prop: str) -> Optional[str]:
 
 def iter_factual_evidence(factual_ndjson: Path, max_chars: int = 8000) -> Iterator[Evidence]:
     factual_ndjson = Path(factual_ndjson)
-    for line in factual_ndjson.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        try:
-            ent = json.loads(line)
-        except Exception:
-            continue
-
-        schema = ent.get("schema")
-        ent_id = ent.get("id")
-        if not schema or not ent_id:
-            continue
-
-        if schema == "Image":
-            desc = _first_prop(ent, "description")
-            if not desc:
+    with factual_ndjson.open("r", encoding="utf-8") as fh:
+        for line in fh:
+            if not line.strip():
                 continue
-            yield Evidence(proof_id=str(ent_id), kind="Image", text=desc[:max_chars])
-
-        elif schema == "Document":
-            body = _first_prop(ent, "bodyText")
-            if not body:
+            try:
+                ent = json.loads(line)
+            except Exception:
                 continue
-            yield Evidence(proof_id=str(ent_id), kind="Document", text=body[:max_chars])
+
+            schema = ent.get("schema")
+            ent_id = ent.get("id")
+            if not schema or not ent_id:
+                continue
+
+            if schema == "Image":
+                desc = _first_prop(ent, "description")
+                if not desc:
+                    continue
+                yield Evidence(proof_id=str(ent_id), kind="Image", text=desc[:max_chars])
+
+            elif schema == "Document":
+                body = _first_prop(ent, "bodyText")
+                if not body:
+                    continue
+                yield Evidence(proof_id=str(ent_id), kind="Document", text=body[:max_chars])
 
 
 def _extract_json_array(text: str) -> Optional[str]:
@@ -170,7 +171,12 @@ def _add_inference_meta(entity, meta: Dict[str, Any]) -> None:
         entity.add("summary", text)
 
 
-def _infer_raw(client: ollama.Client, model_name: str, evidence: Evidence) -> List[Dict[str, Any]]:
+def _infer_raw(
+    client: ollama.Client,
+    model_name: str,
+    evidence: Evidence,
+    verbose: bool = False,
+) -> List[Dict[str, Any]]:
     prompt = (
         "You are an information extraction system.\n"
         "Extract FollowTheMoney entities from the input text.\n\n"
@@ -189,7 +195,14 @@ def _infer_raw(client: ollama.Client, model_name: str, evidence: Evidence) -> Li
         f"{evidence.text}\n"
     )
 
-    resp = client.generate(model=model_name, prompt=prompt)
+    try:
+        resp = client.generate(model=model_name, prompt=prompt)
+    except Exception as exc:
+        if verbose:
+            import sys
+
+            print(f"[infer] ollama generate failed for {evidence.kind} {evidence.proof_id}: {exc}", file=sys.stderr)
+        return []
     raw = (resp or {}).get("response", "")
     json_text = _extract_json_array(raw)
     if not json_text:
@@ -209,6 +222,7 @@ def infer_stream(
     ollama_host: Optional[str] = None,
     model_name: Optional[str] = None,
     max_chars: int = 8000,
+    verbose: bool = False,
 ) -> int:
     cfg = load_config()
     enrichment = cfg.get("enrichment", {})
@@ -218,15 +232,36 @@ def infer_stream(
     if model_name is None:
         model_name = enrichment.get("description_model", "llava")
 
+    if verbose:
+        import sys
+
+        print(f"[infer] factual={Path(factual_ndjson)}", file=sys.stderr)
+        print(f"[infer] out={Path(out_path)}", file=sys.stderr)
+        print(f"[infer] ollama_host={ollama_host} model={model_name}", file=sys.stderr)
+
     client = ollama.Client(host=ollama_host)
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    factual_ndjson = Path(factual_ndjson)
+    if not factual_ndjson.exists():
+        import sys
+
+        print(f"[infer] missing factual NDJSON: {factual_ndjson}", file=sys.stderr)
+        return 2
+
     emitted: Dict[str, Any] = {}
+    evidence_count = 0
 
     for evidence in iter_factual_evidence(factual_ndjson, max_chars=max_chars):
-        raw_items = _infer_raw(client, model_name, evidence)
+        evidence_count += 1
+        if verbose and evidence_count % 25 == 0:
+            import sys
+
+            print(f"[infer] processed evidence: {evidence_count} (entities: {len(emitted)})", file=sys.stderr)
+
+        raw_items = _infer_raw(client, model_name, evidence, verbose=verbose)
 
         # per-proof local caches to allow Event linking by name
         persons: Dict[str, str] = {}
@@ -381,5 +416,13 @@ def infer_stream(
     with out_path.open("w", encoding="utf-8") as out:
         for ent in emitted.values():
             out.write(json.dumps(ent.to_dict(), ensure_ascii=False) + "\n")
+
+    if verbose:
+        import sys
+
+        print(
+            f"[infer] wrote {out_path} (entities: {len(emitted)}, evidence: {evidence_count})",
+            file=sys.stderr,
+        )
 
     return 0

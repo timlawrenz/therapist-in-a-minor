@@ -38,6 +38,11 @@ def main() -> int:
         default=8000,
         help="Max characters of evidence text to send to the LLM per item",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print progress and errors to stderr",
+    )
 
     args = parser.parse_args()
     factual = args.factual or (args.target / "followthemoney.ndjson")
@@ -49,6 +54,7 @@ def main() -> int:
         ollama_host=args.ollama_host,
         model_name=args.model,
         max_chars=args.max_chars,
+        verbose=args.verbose,
     )
 
 

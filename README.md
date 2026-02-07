@@ -73,6 +73,9 @@ python scripts/infer_followthemoney.py --target /path/to/target
 # reads:  /path/to/target/followthemoney.ndjson
 # writes: /path/to/target/followthemoney.inferred.ndjson
 
+# show progress:
+python scripts/infer_followthemoney.py --target /path/to/target --verbose
+
 # override inputs/outputs:
 python scripts/infer_followthemoney.py --target /path/to/target --factual /path/to/followthemoney.ndjson --out /path/to/inferred.ndjson
 ```
