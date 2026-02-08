@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions
 from docling.datamodel.layout_model_specs import DOCLING_LAYOUT_HERON_101, LayoutModelConfig
+from docling.datamodel.accelerator_options import AcceleratorOptions, AcceleratorDevice
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from extractor.utils import load_config, get_file_metadata
 
@@ -45,11 +46,17 @@ class DoclingEngine:
                 )
             
         # OCR configuration
-        ocr_model_id = docling_config.get("ocr_model")
-        if "do_ocr" in docling_config:
-            pipeline_options.do_ocr = bool(docling_config.get("do_ocr"))
-        elif ocr_model_id:
-            pipeline_options.do_ocr = True
+        pipeline_options.do_ocr = True
+        pipeline_options.ocr_options = RapidOcrOptions(
+            backend="torch"
+        )
+
+        # Accelerator configuration
+        accelerator_options = AcceleratorOptions(
+            num_threads=docling_config.get("num_threads", 4),
+            device=AcceleratorDevice.AUTO
+        )
+        pipeline_options.accelerator_options = accelerator_options
     
         # Enable image extraction as per vision
         pipeline_options.generate_picture_images = True

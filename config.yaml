@@ -2,7 +2,7 @@ docling:
   ocr_model: "https://huggingface.co/zai-org/GLM-OCR"
   layout_model: "https://huggingface.co/docling-project/docling-layout-heron-101"
 enrichment:
-  ollama_host: "http://192.168.86.137:11434"
+  ollama_host: "http://192.168.86.162:11434"
   description_model: "gemma3:27b"
   embedding_model_dino: "facebook/dinov2-base"
   embedding_model_clip: "openai/clip-vit-base-patch32"
